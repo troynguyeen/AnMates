@@ -182,6 +182,8 @@
 - **Đặt lịch hẹn & Nhắc nhở** — Hai người sau khi match có thể đặt lịch hẹn đến một địa điểm, app gửi push notification nhắc nhở trước giờ hẹn
 - **Review & Check-in** — Viết review ngay tại chỗ sau khi đến, kiếm AnPoints
 - **Redirect Maps** — Nút "Chỉ đường" mở Google Maps app với địa chỉ đích đến
+- **Tạo Nhóm Đi Ăn** — Tạo nhóm tối đa 4 người; gửi push notification khi có thành viên gia nhập hoặc rời khỏi nhóm
+- **AI Gợi Ý Món Ăn** — Gợi ý món dựa trên số người (2 hoặc 4), mood & sở thích của cả nhóm, và mức giá từ thấp đến trung bình
 
 #### 3.4.3 Engagement Loops — Lý do quay lại mỗi ngày
 

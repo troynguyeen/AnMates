@@ -14,6 +14,195 @@ struct Place: Identifiable {
     let vibeTags: [String]
     let gradient: [Color]
     var isLiked: Bool = false
+    // Detailed info
+    var phone: String = "+84 28 3822 1234"
+    var openingHours: String = "09:00 - 23:00"
+    var reviewCount: Int = 128
+    var detailDescription: String = "Một địa điểm tuyệt vời với không gian ấm cúng, phù hợp cho cả hẹn hò lẫn đi cùng bạn bè."
+    var reviews: [PlaceReview] = PlaceReview.sampleReviews
+}
+
+// MARK: - Review Model
+struct PlaceReview: Identifiable {
+    let id = UUID()
+    let authorName: String
+    let authorEmoji: String
+    let rating: Int
+    let content: String
+    let timeAgo: String
+    let vibeTags: [String]
+
+    static let sampleReviews: [PlaceReview] = [
+        PlaceReview(authorName: "Linh N.", authorEmoji: "👩‍🎨", rating: 5,
+                    content: "View đẹp, đồ uống ngon, không gian instagram-able cực! Sẽ quay lại 💕",
+                    timeAgo: "2 ngày trước", vibeTags: ["Romantic 💕", "Instagrammable 📸"]),
+        PlaceReview(authorName: "Minh T.", authorEmoji: "👨‍💻", rating: 4,
+                    content: "Đồ ăn ok, giá hợp lý. Buổi tối hơi đông, nên đặt trước.",
+                    timeAgo: "5 ngày trước", vibeTags: ["Foodie 🍜", "Lively 🎉"]),
+        PlaceReview(authorName: "Hà P.", authorEmoji: "👩‍💼", rating: 5,
+                    content: "Phục vụ nhiệt tình, nhạc hay, không gian chill 🌃",
+                    timeAgo: "1 tuần trước", vibeTags: ["Chill ☕", "Music 🎵"]),
+    ]
+}
+
+// MARK: - Scheduled Date (Đặt lịch hẹn)
+struct ScheduledDate: Identifiable {
+    let id = UUID()
+    let place: Place
+    let partner: AppUser
+    var date: Date
+    var note: String
+    var reminderMinutesBefore: Int = 60
+}
+
+// MARK: - Dining Group (Tạo Nhóm Đi Ăn)
+struct DiningGroup: Identifiable {
+    let id = UUID()
+    var name: String
+    var place: Place?
+    var members: [AppUser]
+    var maxMembers: Int = 4
+    var scheduledTime: Date
+    var mood: Mood
+    var notes: String = ""
+    var isJoined: Bool = false
+
+    var isFull: Bool { members.count >= maxMembers }
+    var slotsLeft: Int { maxMembers - members.count }
+}
+
+// MARK: - AI Food Suggestion
+struct FoodSuggestion: Identifiable {
+    let id = UUID()
+    let name: String
+    let emoji: String
+    let priceLevel: String   // "Thấp", "Trung bình"
+    let estimatedPrice: String
+    let matchScore: Int      // 0-100
+    let reason: String
+    let suitableFor: Int     // số người phù hợp
+
+    static func suggestions(forGroupSize size: Int, mood: Mood) -> [FoodSuggestion] {
+        let all: [FoodSuggestion] = [
+            FoodSuggestion(name: "Lẩu Thái chua cay", emoji: "🍲", priceLevel: "Trung bình",
+                           estimatedPrice: "200-300k/người", matchScore: 95,
+                           reason: "Hoàn hảo cho nhóm \(size) người, hợp mood ấm áp", suitableFor: 4),
+            FoodSuggestion(name: "Bún Bò Huế", emoji: "🍜", priceLevel: "Thấp",
+                           estimatedPrice: "60-90k/người", matchScore: 88,
+                           reason: "Đậm đà, hợp khẩu vị Việt, giá rẻ", suitableFor: 2),
+            FoodSuggestion(name: "BBQ Hàn Quốc", emoji: "🥩", priceLevel: "Trung bình",
+                           estimatedPrice: "250-400k/người", matchScore: 92,
+                           reason: "Phù hợp nhóm, không khí vui vẻ", suitableFor: 4),
+            FoodSuggestion(name: "Sushi Combo", emoji: "🍣", priceLevel: "Trung bình",
+                           estimatedPrice: "180-280k/người", matchScore: 85,
+                           reason: "Sang trọng vừa phải, hợp date 2 người", suitableFor: 2),
+            FoodSuggestion(name: "Pizza & Pasta", emoji: "🍕", priceLevel: "Thấp",
+                           estimatedPrice: "120-180k/người", matchScore: 80,
+                           reason: "Dễ chia sẻ, hợp nhóm bạn", suitableFor: 4),
+            FoodSuggestion(name: "Phở", emoji: "🍜", priceLevel: "Thấp",
+                           estimatedPrice: "50-80k/người", matchScore: 78,
+                           reason: "Đơn giản, ngon, giá rẻ", suitableFor: 2),
+        ]
+        return all.filter { $0.suitableFor == size || size == 4 }
+                  .sorted { $0.matchScore > $1.matchScore }
+    }
+}
+
+// MARK: - Curated Collection
+struct CuratedCollection: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+    let emoji: String
+    let gradient: [Color]
+    let placeCount: Int
+
+    static let samples: [CuratedCollection] = [
+        CuratedCollection(title: "Date Night dưới 500k", subtitle: "Lãng mạn không tốn nhiều ❤️", emoji: "💕",
+                          gradient: [Color(hex: "fd79a8"), Color(hex: "6C5CE7")], placeCount: 12),
+        CuratedCollection(title: "Rooftop Bars Sài Gòn", subtitle: "View cực đỉnh về đêm 🌃", emoji: "🌃",
+                          gradient: [Color(hex: "2d3436"), Color(hex: "6C5CE7")], placeCount: 8),
+        CuratedCollection(title: "Hidden Gems Quận 1", subtitle: "Ít người biết, chất lượng 💎", emoji: "💎",
+                          gradient: [Color(hex: "00cec9"), Color(hex: "0984e3")], placeCount: 15),
+        CuratedCollection(title: "Cafe làm việc cả ngày", subtitle: "Wifi tốt, ổ cắm nhiều ☕", emoji: "☕",
+                          gradient: [Color(hex: "00b894"), Color(hex: "55efc4")], placeCount: 20),
+        CuratedCollection(title: "Trời mưa thì đi đâu?", subtitle: "Indoor, ấm cúng 🌧️", emoji: "🌧️",
+                          gradient: [Color(hex: "636e72"), Color(hex: "74b9ff")], placeCount: 10),
+    ]
+}
+
+// MARK: - Smart Filter
+struct PlaceFilter {
+    var distance: Double = 5.0          // km
+    var maxPrice: Double = 500          // nghìn VND
+    var minRating: Double = 4.0
+    var openNow: Bool = false
+    var suitableFor: String = "Mọi người"
+
+    static let suitableOptions = ["Mọi người", "1 người", "Nhóm bạn", "Date 💕", "Gia đình"]
+}
+
+// MARK: - Theme Manager (Adaptive Theme)
+enum ThemeMode: String, CaseIterable {
+    case sunriseAmber, oceanBlue, sunsetOrange, midnight, purplePink, emeraldGreen
+
+    var displayName: String {
+        switch self {
+        case .sunriseAmber: return "Sunrise Amber"
+        case .oceanBlue:    return "Ocean Blue"
+        case .sunsetOrange: return "Sunset Orange"
+        case .midnight:     return "Midnight"
+        case .purplePink:   return "Purple Pink"
+        case .emeraldGreen: return "Emerald Green"
+        }
+    }
+
+    var emoji: String {
+        switch self {
+        case .sunriseAmber: return "🌅"
+        case .oceanBlue:    return "☀️"
+        case .sunsetOrange: return "🌆"
+        case .midnight:     return "🌙"
+        case .purplePink:   return "🌃"
+        case .emeraldGreen: return "🌿"
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .sunriseAmber: return Color(hex: "fdcb6e")
+        case .oceanBlue:    return Color(hex: "0984e3")
+        case .sunsetOrange: return Color(hex: "e17055")
+        case .midnight:     return Color(hex: "6C5CE7")
+        case .purplePink:   return Color(hex: "fd79a8")
+        case .emeraldGreen: return Color(hex: "00b894")
+        }
+    }
+
+    static func forCurrentHour(_ hour: Int = Calendar.current.component(.hour, from: Date())) -> ThemeMode {
+        switch hour {
+        case 6..<11:  return .sunriseAmber
+        case 11..<17: return .oceanBlue
+        case 17..<20: return .sunsetOrange
+        case 20..<24: return .purplePink
+        default:      return .midnight
+        }
+    }
+}
+
+final class ThemeManager: ObservableObject {
+    @Published var mode: ThemeMode = ThemeMode.forCurrentHour()
+    @Published var isLocked: Bool = false
+
+    func refreshIfNeeded() {
+        guard !isLocked else { return }
+        mode = ThemeMode.forCurrentHour()
+    }
+
+    func override(_ newMode: ThemeMode, lock: Bool = true) {
+        mode = newMode
+        isLocked = lock
+    }
 }
 
 enum PlaceCategory: String, CaseIterable {

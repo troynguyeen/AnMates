@@ -6,6 +6,8 @@ struct MatchView: View {
     @State private var dragOffset = CGSize.zero
     @State private var showMatchOverlay = false
     @State private var matchedUser: AppUser? = nil
+    @State private var selectedMode: String = "🎲 Random Vibe"
+    @State private var safetyTarget: AppUser? = nil
 
     var body: some View {
         NavigationStack {
@@ -25,6 +27,15 @@ struct MatchView: View {
                         }
                         Spacer()
                         Button {
+                            if currentIndex < users.count { safetyTarget = users[currentIndex] }
+                        } label: {
+                            Image(systemName: "shield.fill")
+                                .foregroundColor(Color(hex: "00b894"))
+                                .padding(10)
+                                .background(Color(hex: "00b894").opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                        Button {
                         } label: {
                             Image(systemName: "flame.fill")
                                 .foregroundColor(Color(hex: "fd79a8"))
@@ -41,14 +52,18 @@ struct MatchView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 10) {
                             ForEach(["🎲 Random Vibe", "🎯 Activity", "👥 Group", "💕 Date"], id: \.self) { mode in
-                                Text(mode)
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(mode == "🎲 Random Vibe" ? Color(hex: "6C5CE7").opacity(0.3) : Color(hex: "1a1a2e"))
-                                    .foregroundColor(mode == "🎲 Random Vibe" ? Color(hex: "a29bfe") : .gray)
-                                    .clipShape(Capsule())
-                                    .overlay(Capsule().stroke(mode == "🎲 Random Vibe" ? Color(hex: "6C5CE7") : .clear, lineWidth: 1.5))
+                                Button {
+                                    selectedMode = mode
+                                } label: {
+                                    Text(mode)
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(selectedMode == mode ? Color(hex: "6C5CE7").opacity(0.3) : Color(hex: "1a1a2e"))
+                                        .foregroundColor(selectedMode == mode ? Color(hex: "a29bfe") : .gray)
+                                        .clipShape(Capsule())
+                                        .overlay(Capsule().stroke(selectedMode == mode ? Color(hex: "6C5CE7") : .clear, lineWidth: 1.5))
+                                }
                             }
                         }
                         .padding(.horizontal)
@@ -152,6 +167,9 @@ struct MatchView: View {
                 }
             }
             .animation(.easeInOut, value: showMatchOverlay)
+            .sheet(item: $safetyTarget) { user in
+                SafetyMenuView(targetName: user.name)
+            }
         }
     }
 

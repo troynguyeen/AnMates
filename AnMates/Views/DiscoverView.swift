@@ -7,6 +7,11 @@ struct DiscoverView: View {
     @State private var dragOffset = CGSize.zero
     @State private var showMatchAlert = false
     @State private var matchedPlace: Place? = nil
+    @State private var showFilters = false
+    @State private var showCollections = false
+    @State private var detailPlace: Place? = nil
+    @State private var filter = PlaceFilter()
+    @EnvironmentObject private var theme: ThemeManager
 
     var body: some View {
         NavigationStack {
@@ -17,15 +22,28 @@ struct DiscoverView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Khám phá")
-                                .font(.title.bold())
-                                .foregroundStyle(.white)
-                            Text("TP. Hồ Chí Minh · Hôm nay")
+                            HStack(spacing: 6) {
+                                Text("Khám phá")
+                                    .font(.title.bold())
+                                    .foregroundStyle(.white)
+                                Text(theme.mode.emoji).font(.title3)
+                            }
+                            Text("TP. Hồ Chí Minh · \(theme.mode.displayName)")
                                 .font(.caption)
-                                .foregroundColor(Color(hex: "a29bfe"))
+                                .foregroundColor(theme.mode.accent)
                         }
                         Spacer()
                         Button {
+                            showCollections = true
+                        } label: {
+                            Image(systemName: "square.grid.2x2.fill")
+                                .foregroundColor(.white)
+                                .padding(10)
+                                .background(Color(hex: "1a1a2e"))
+                                .clipShape(Circle())
+                        }
+                        Button {
+                            showFilters = true
                         } label: {
                             Image(systemName: "slider.horizontal.3")
                                 .foregroundColor(.white)
@@ -63,6 +81,9 @@ struct DiscoverView: View {
                                         .scaleEffect(i == currentIndex ? 1.0 : max(0.92, 1.0 - CGFloat(i - currentIndex) * 0.04))
                                         .rotationEffect(.degrees(i == currentIndex ? Double(dragOffset.width) / 20 : 0))
                                         .zIndex(Double(places.count - i))
+                                        .onTapGesture {
+                                            if i == currentIndex { detailPlace = place }
+                                        }
                                         .gesture(
                                             i == currentIndex ?
                                             DragGesture()
@@ -126,6 +147,15 @@ struct DiscoverView: View {
             }
         }
         .animation(.spring(), value: showMatchAlert)
+        .sheet(isPresented: $showFilters) {
+            SmartFiltersView(filter: $filter) {}
+        }
+        .sheet(isPresented: $showCollections) {
+            CuratedCollectionsView()
+        }
+        .fullScreenCover(item: $detailPlace) { place in
+            NavigationStack { PlaceDetailView(place: place) }
+        }
     }
 
     private func handleSwipe(_ translation: CGSize) {

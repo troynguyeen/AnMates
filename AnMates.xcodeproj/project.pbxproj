@@ -15,6 +15,14 @@
 		9CB7CA379B594B678FBA2D48 /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A90AC4B9EC4575A93E9DDC /* ChatListView.swift */; };
 		CCE99A169B0E42E79DA184DE /* ChatDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164FF03F5ADF4E1883118FEF /* ChatDetailView.swift */; };
 		BC7A408F67634E1CAEDDCB98 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C45F4C9EF2C4B92890125DD /* ProfileView.swift */; };
+		AA01001A11111111AA010001 /* PlaceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001011111111AA010001 /* PlaceDetailView.swift */; };
+		AA01001B11111111AA010002 /* DateSchedulingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001111111111AA010002 /* DateSchedulingView.swift */; };
+		AA01001C11111111AA010003 /* ReviewCheckinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001211111111AA010003 /* ReviewCheckinView.swift */; };
+		AA01001D11111111AA010004 /* DiningGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001311111111AA010004 /* DiningGroupView.swift */; };
+		AA01001E11111111AA010005 /* AIFoodSuggestionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001411111111AA010005 /* AIFoodSuggestionView.swift */; };
+		AA01001F11111111AA010006 /* SmartFiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001511111111AA010006 /* SmartFiltersView.swift */; };
+		AA01002011111111AA010007 /* CuratedCollectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001611111111AA010007 /* CuratedCollectionsView.swift */; };
+		AA01002111111111AA010008 /* SafetyMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01001711111111AA010008 /* SafetyMenuView.swift */; };
 		735BB095E5E3413CACEA350B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3142465699174E82B6E3A8F7 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -27,6 +35,14 @@
 		93A90AC4B9EC4575A93E9DDC /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
 		164FF03F5ADF4E1883118FEF /* ChatDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailView.swift; sourceTree = "<group>"; };
 		4C45F4C9EF2C4B92890125DD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		AA01001011111111AA010001 /* PlaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDetailView.swift; sourceTree = "<group>"; };
+		AA01001111111111AA010002 /* DateSchedulingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateSchedulingView.swift; sourceTree = "<group>"; };
+		AA01001211111111AA010003 /* ReviewCheckinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewCheckinView.swift; sourceTree = "<group>"; };
+		AA01001311111111AA010004 /* DiningGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiningGroupView.swift; sourceTree = "<group>"; };
+		AA01001411111111AA010005 /* AIFoodSuggestionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIFoodSuggestionView.swift; sourceTree = "<group>"; };
+		AA01001511111111AA010006 /* SmartFiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartFiltersView.swift; sourceTree = "<group>"; };
+		AA01001611111111AA010007 /* CuratedCollectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuratedCollectionsView.swift; sourceTree = "<group>"; };
+		AA01001711111111AA010008 /* SafetyMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafetyMenuView.swift; sourceTree = "<group>"; };
 		3142465699174E82B6E3A8F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -61,6 +77,14 @@
 				93A90AC4B9EC4575A93E9DDC /* ChatListView.swift */,
 				164FF03F5ADF4E1883118FEF /* ChatDetailView.swift */,
 				4C45F4C9EF2C4B92890125DD /* ProfileView.swift */,
+				AA01001011111111AA010001 /* PlaceDetailView.swift */,
+				AA01001111111111AA010002 /* DateSchedulingView.swift */,
+				AA01001211111111AA010003 /* ReviewCheckinView.swift */,
+				AA01001311111111AA010004 /* DiningGroupView.swift */,
+				AA01001411111111AA010005 /* AIFoodSuggestionView.swift */,
+				AA01001511111111AA010006 /* SmartFiltersView.swift */,
+				AA01001611111111AA010007 /* CuratedCollectionsView.swift */,
+				AA01001711111111AA010008 /* SafetyMenuView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -152,6 +176,14 @@
 				9CB7CA379B594B678FBA2D48 /* ChatListView.swift in Sources */,
 				CCE99A169B0E42E79DA184DE /* ChatDetailView.swift in Sources */,
 				BC7A408F67634E1CAEDDCB98 /* ProfileView.swift in Sources */,
+				AA01001A11111111AA010001 /* PlaceDetailView.swift in Sources */,
+				AA01001B11111111AA010002 /* DateSchedulingView.swift in Sources */,
+				AA01001C11111111AA010003 /* ReviewCheckinView.swift in Sources */,
+				AA01001D11111111AA010004 /* DiningGroupView.swift in Sources */,
+				AA01001E11111111AA010005 /* AIFoodSuggestionView.swift in Sources */,
+				AA01001F11111111AA010006 /* SmartFiltersView.swift in Sources */,
+				AA01002011111111AA010007 /* CuratedCollectionsView.swift in Sources */,
+				AA01002111111111AA010008 /* SafetyMenuView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
