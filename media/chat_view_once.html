@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AnMates — Chat Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --primary: #6C5CE7;
+    --primary-light: #a29bfe;
+    --secondary: #FD79A8;
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #16213e;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --bubble-me: linear-gradient(135deg, #6C5CE7, #FD79A8);
+    --bubble-them: #1e1e35;
+    --radius: 20px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 50px;
+    border: 3px solid #2a2a4a;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 60px rgba(108,92,231,0.3), 0 0 120px rgba(253,121,168,0.1);
+  }
+
+  /* Header */
+  .chat-header {
+    background: var(--surface);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #2a2a4a;
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--primary-light);
+  }
+
+  .avatar-wrap {
+    position: relative;
+  }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bubble-me);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .online-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    background: #00b894;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+  }
+
+  .header-info { flex: 1; }
+  .header-name { font-weight: 700; font-size: 15px; }
+  .header-status { font-size: 12px; color: #00b894; margin-top: 1px; }
+
+  .header-actions { display: flex; gap: 16px; }
+  .header-actions span { font-size: 18px; cursor: pointer; color: var(--text-muted); }
+  .header-actions span:hover { color: var(--primary-light); }
+
+  /* Messages area */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 4px; }
+
+  .date-divider {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 8px 0;
+  }
+
+  /* Message bubbles */
+  .msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .msg-row.me { flex-direction: row-reverse; }
+
+  .msg-avatar-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    align-self: flex-end;
+  }
+
+  .bubble {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+  }
+
+  .bubble.them {
+    background: var(--bubble-them);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .bubble.me {
+    background: var(--bubble-me);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .bubble .time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 4px;
+    display: block;
+  }
+
+  .msg-row.me .bubble .time { text-align: right; }
+
+  /* ===== VIEW ONCE PHOTO BUBBLE ===== */
+  .view-once-bubble {
+    max-width: 75%;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+
+  /* Chưa xem — hiển thị preview blur */
+  .view-once-preview {
+    width: 220px;
+    height: 220px;
+    background: linear-gradient(135deg, #1e1e35, #2a2a50);
+    border: 2px solid rgba(108,92,231,0.5);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .view-once-preview:hover {
+    border-color: var(--primary);
+    transform: scale(1.01);
+  }
+
+  .view-once-preview .bg-blur {
+    position: absolute;
+    inset: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><defs><filter id="blur"><feGaussianBlur stdDeviation="12"/></filter></defs><rect width="220" height="220" fill="%23a29bfe" opacity="0.08"/><circle cx="110" cy="90" r="50" fill="%23FD79A8" opacity="0.15" filter="url(%23blur)"/></svg>');
+    filter: blur(2px);
+  }
+
+  .view-once-icon {
+    width: 52px;
+    height: 52px;
+    background: rgba(108,92,231,0.25);
+    border: 2px solid rgba(108,92,231,0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    z-index: 1;
+    backdrop-filter: blur(8px);
+  }
+
+  .view-once-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-light);
+    z-index: 1;
+  }
+
+  .view-once-sublabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    z-index: 1;
+  }
+
+  .view-once-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+
+  /* Đã xem */
+  .view-once-seen {
+    width: 220px;
+    height: 56px;
+    background: #1a1a2e;
+    border: 1.5px solid #2a2a4a;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    cursor: default;
+  }
+
+  .view-once-seen .seen-icon {
+    font-size: 20px;
+    opacity: 0.4;
+  }
+
+  .view-once-seen .seen-text {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ===== FULLSCREEN VIEWER ===== */
+  .viewer-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.97);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .viewer-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .viewer-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .viewer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bubble-me);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .viewer-name { font-size: 14px; font-weight: 600; }
+
+  .viewer-close {
+    margin-left: auto;
+    font-size: 22px;
+    cursor: pointer;
+    color: white;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+
+  /* Photo display */
+  .viewer-photo {
+    width: 340px;
+    height: 400px;
+    border-radius: 20px;
+    object-fit: cover;
+    position: relative;
+  }
+
+  /* Fake photo — gradient with emoji */
+  .fake-photo {
+    width: 340px;
+    height: 400px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1a1a35 0%, #6C5CE7 40%, #FD79A8 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 64px;
+    animation: photoReveal 0.4s ease;
+  }
+
+  @keyframes photoReveal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .fake-photo .photo-caption {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+
+  /* Timer bar */
+  .viewer-timer {
+    margin-top: 24px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .timer-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .timer-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .timer-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    width: 100%;
+    animation: timerDrain 8s linear forwards;
+  }
+
+  @keyframes timerDrain {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  /* Warning after timer */
+  .viewer-hold-hint {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* Screenshot warning */
+  .screenshot-warning {
+    position: absolute;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+    background: rgba(253,121,168,0.15);
+    border: 1px solid rgba(253,121,168,0.4);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #FD79A8;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .screenshot-warning.show { opacity: 1; }
+
+  /* Input area */
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid #2a2a4a;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .input-box {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid #2a2a4a;
+    border-radius: 24px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .input-box::placeholder { color: var(--text-muted); }
+  .input-box:focus { border-color: var(--primary); }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-icon:hover { background: rgba(255,255,255,0.08); color: var(--primary-light); }
+
+  .btn-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bubble-me);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+
+  .btn-send:hover { transform: scale(1.1); }
+
+  /* View-once button in toolbar */
+  .btn-view-once {
+    position: relative;
+  }
+
+  .btn-view-once .vo-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #FD79A8;
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+  }
+
+  /* Tooltip */
+  .tooltip-popup {
+    position: absolute;
+    bottom: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2a4a;
+    border: 1px solid #3a3a5a;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .tooltip-popup.show { opacity: 1; }
+
+  /* Notification toast */
+  .toast {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(108,92,231,0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: white;
+    white-space: nowrap;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    transform: translateX(-50%) translateY(-10px);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">📸 Ảnh đã xem — sẽ không thể xem lại</div>
+
+  <!-- CHAT HEADER -->
+  <div class="chat-header">
+    <div class="back-btn">‹</div>
+    <div class="avatar-wrap">
+      <div class="avatar">L</div>
+      <div class="online-dot"></div>
+    </div>
+    <div class="header-info">
+      <div class="header-name">Linh Nguyễn ✅</div>
+      <div class="header-status">Đang hoạt động</div>
+    </div>
+    <div class="header-actions">
+      <span title="Gọi video">📹</span>
+      <span title="Thông tin">ⓘ</span>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="messages" id="messages">
+    <div class="date-divider">Hôm nay, 20:14</div>
+
+    <!-- Tin nhắn thường từ họ -->
+    <div class="msg-row">
+      <div class="msg-avatar-small">L</div>
+      <div class="bubble them">
+        Ê! Tối nay mày có rảnh không? 😊
+        <span class="time">20:14</span>
+      </div>
+    </div>
+
+    <!-- Tin nhắn thường từ mình -->
+    <div class="msg-row me">
+      <div class="bubble me">
+        Rảnh nè! Định đi đâu không?
+        <span class="time">20:15</span>
+      </div>
+    </div>
+
+    <div class="msg-row">
+      <div class="msg-avatar-small">L</div>
+      <div class="bubble them">
+        Tao đang ở Rooftop Bar A, view đẹp lắm 🌃
+        <span class="time">20:16</span>
+      </div>
+    </div>
+
+    <!-- VIEW ONCE từ họ gửi — CHƯA XEM -->
+    <div class="msg-row" id="vo-row-1">
+      <div class="msg-avatar-small">L</div>
+      <div class="view-once-bubble" onclick="openViewer('vo-row-1', '🌃', 'View từ đây chill lắm!')">
+        <div class="view-once-preview">
+          <div class="bg-blur"></div>
+          <div class="view-once-icon">👁️</div>
+          <div class="view-once-label">Ảnh xem 1 lần</div>
+          <div class="view-once-sublabel">Nhấn để xem · Sẽ biến mất sau</div>
+        </div>
+        <div class="view-once-time">20:17 · 📸 Ảnh tự huỷ</div>
+      </div>
+    </div>
+
+    <div class="msg-row me">
+      <div class="bubble me">
+        Wow gửi ảnh đi xem nào! 👀
+        <span class="time">20:17</span>
+      </div>
+    </div>
+
+    <!-- VIEW ONCE từ mình gửi — CHƯA XEM BỞI ĐỐI PHƯƠNG -->
+    <div class="msg-row me" id="vo-row-2">
+      <div class="view-once-bubble">
+        <div class="view-once-preview" style="background: linear-gradient(135deg, #1e2535, #1a3050); border-color: rgba(108,92,231,0.4);">
+          <div class="bg-blur"></div>
+          <div class="view-once-icon">📤</div>
+          <div class="view-once-label">Đã gửi ảnh 1 lần</div>
+          <div class="view-once-sublabel">Đang chờ đối phương xem</div>
+        </div>
+        <div class="view-once-time" style="text-align:right">20:18 · Chưa xem</div>
+      </div>
+    </div>
+
+    <!-- VIEW ONCE đã xem (ví dụ lịch sử) -->
+    <div class="msg-row" id="vo-row-3">
+      <div class="msg-avatar-small">L</div>
+      <div class="view-once-bubble">
+        <div class="view-once-seen">
+          <span class="seen-icon">🔒</span>
+          <span class="seen-text">Ảnh đã xem · Không thể mở lại</span>
+        </div>
+        <div class="view-once-time">20:10 · Đã xem</div>
+      </div>
+    </div>
+
+    <div class="msg-row">
+      <div class="msg-avatar-small">L</div>
+      <div class="bubble them">
+        Mày xuống đây không? 🙌
+        <span class="time">20:19</span>
+      </div>
+    </div>
+
+  </div><!-- end messages -->
+
+  <!-- INPUT AREA -->
+  <div class="input-area" style="position:relative">
+    <div class="tooltip-popup" id="tooltip">📸 Gửi ảnh xem 1 lần<br><span style="color:#888;font-size:11px">Ảnh tự huỷ sau khi đối phương xem</span></div>
+    <button class="btn-icon btn-view-once" id="btnViewOnce" onclick="sendViewOnce()" title="Gửi ảnh xem 1 lần">
+      📸
+      <div class="vo-badge"></div>
+    </button>
+    <button class="btn-icon" title="Đính kèm">📎</button>
+    <input class="input-box" type="text" placeholder="Nhắn tin..." id="msgInput" onkeypress="handleKey(event)">
+    <button class="btn-send" onclick="sendMsg()">➤</button>
+  </div>
+
+  <!-- FULLSCREEN VIEWER -->
+  <div class="viewer-overlay" id="viewer">
+    <div class="viewer-top">
+      <div class="viewer-avatar">L</div>
+      <div class="viewer-name">Linh Nguyễn</div>
+      <div class="viewer-close" onclick="closeViewer()">✕</div>
+    </div>
+
+    <div class="fake-photo" id="viewerPhoto">
+      <span id="viewerEmoji">🌃</span>
+      <div class="photo-caption" id="viewerCaption">View từ đây chill lắm!</div>
+    </div>
+
+    <div class="viewer-timer">
+      <div class="timer-label">
+        <span>⏱</span>
+        <span id="timerText">Ảnh sẽ biến mất sau 8 giây</span>
+      </div>
+      <div class="timer-bar-bg">
+        <div class="timer-bar-fill" id="timerBar"></div>
+      </div>
+      <div class="viewer-hold-hint">Giữ ngón tay để xem lâu hơn · Chỉ xem được 1 lần</div>
+    </div>
+
+    <div class="screenshot-warning" id="screenshotWarn">
+      ⚠️ Linh sẽ được thông báo nếu bạn chụp màn hình
+    </div>
+  </div>
+
+</div><!-- end phone -->
+
+<script>
+  let currentVoRow = null;
+  let timerInterval = null;
+  let timerSeconds = 8;
+
+  // Tooltip on hover
+  const btnVO = document.getElementById('btnViewOnce');
+  const tooltip = document.getElementById('tooltip');
+  btnVO.addEventListener('mouseenter', () => tooltip.classList.add('show'));
+  btnVO.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+
+  function openViewer(rowId, emoji, caption) {
+    currentVoRow = rowId;
+    document.getElementById('viewerEmoji').textContent = emoji;
+    document.getElementById('viewerCaption').textContent = caption;
+
+    const viewer = document.getElementById('viewer');
+    viewer.classList.add('active');
+
+    // Reset timer bar
+    const bar = document.getElementById('timerBar');
+    bar.style.animation = 'none';
+    bar.offsetHeight; // reflow
+    bar.style.animation = 'timerDrain 8s linear forwards';
+
+    timerSeconds = 8;
+    clearInterval(timerInterval);
+
+    const timerText = document.getElementById('timerText');
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      timerText.textContent = `Ảnh sẽ biến mất sau ${timerSeconds} giây`;
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        closeViewer(true);
+      }
+    }, 1000);
+
+    // Show screenshot warning after 2s
+    setTimeout(() => {
+      document.getElementById('screenshotWarn').classList.add('show');
+    }, 2000);
+  }
+
+  function closeViewer(autoClose = false) {
+    clearInterval(timerInterval);
+    const viewer = document.getElementById('viewer');
+    viewer.classList.remove('active');
+    document.getElementById('screenshotWarn').classList.remove('show');
+
+    // Mark as seen
+    if (currentVoRow) {
+      const row = document.getElementById(currentVoRow);
+      if (row) {
+        const bubble = row.querySelector('.view-once-bubble');
+        if (bubble) {
+          bubble.innerHTML = `
+            <div class="view-once-seen">
+              <span class="seen-icon">🔒</span>
+              <span class="seen-text">Ảnh đã xem · Không thể mở lại</span>
+            </div>
+            <div class="view-once-time">20:17 · Đã xem</div>
+          `;
+          bubble.style.cursor = 'default';
+          bubble.onclick = null;
+        }
+      }
+      currentVoRow = null;
+    }
+
+    // Show toast
+    showToast('📸 Ảnh đã xem — sẽ không thể xem lại');
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  function sendViewOnce() {
+    const msgs = document.getElementById('messages');
+    const emojis = ['🌺', '🍜', '🎵', '🌙', '☕', '🎬'];
+    const captions = ['Chỗ này đẹp không? 😊', 'Đang ở đây nè!', 'Nhìn cái này đi 👀', 'Hehe gửi cho xem thôi'];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const caption = captions[Math.floor(Math.random() * captions.length)];
+    const id = 'vo-sent-' + Date.now();
+
+    const row = document.createElement('div');
+    row.className = 'msg-row me';
+    row.id = id;
+    row.innerHTML = `
+      <div class="view-once-bubble" onclick="openViewerSent('${id}', '${emoji}', '${caption}')">
+        <div class="view-once-preview" style="background: linear-gradient(135deg, #1e1e35, #2a2a50); border-color: rgba(108,92,231,0.5);">
+          <div class="bg-blur"></div>
+          <div class="view-once-icon">📤</div>
+          <div class="view-once-label">Đã gửi ảnh 1 lần</div>
+          <div class="view-once-sublabel">Đối phương nhận được</div>
+        </div>
+        <div class="view-once-time" style="text-align:right">${getCurrentTime()} · ✓ Đã gửi</div>
+      </div>
+    `;
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+    showToast('📸 Đã gửi ảnh 1 lần');
+  }
+
+  function openViewerSent(rowId, emoji, caption) {
+    // Người gửi không xem lại được
+    showToast('⚠️ Bạn không thể xem lại ảnh đã gửi');
+  }
+
+  function sendMsg() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const msgs = document.getElementById('messages');
+    const row = document.createElement('div');
+    row.className = 'msg-row me';
+    row.innerHTML = `
+      <div class="bubble me">
+        ${escapeHtml(text)}
+        <span class="time">${getCurrentTime()}</span>
+      </div>
+    `;
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
+    input.value = '';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter') sendMsg();
+  }
+
+  function getCurrentTime() {
+    const now = new Date();
+    return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>
