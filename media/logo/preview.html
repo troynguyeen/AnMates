@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>AnMates — Logo Pixel 2D Concepts</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(180deg, #1a2348 0%, #4a3a6e 35%, #c97a6e 70%, #f4c97a 100%);
+    min-height: 100vh;
+    padding: 32px 16px;
+    color: #fff;
+  }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    opacity: 0.85;
+    margin-bottom: 32px;
+    font-size: 14px;
+  }
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,0.14);
+  }
+  .label {
+    font-weight: 600;
+    margin-top: 12px;
+    font-size: 15px;
+  }
+  .desc {
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 16px;
+  }
+  svg {
+    width: 180px;
+    height: 180px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border-radius: 14px;
+  }
+  .small-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .small-row svg {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+  .small-row .mid { width: 56px; height: 56px; border-radius: 10px; }
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    opacity: 0.7;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<h1>AnMates — Logo Pixel 2D</h1>
+<p class="subtitle">8 phương án lấy cảm hứng từ skyline hoàng hôn · Pixel art SVG · Scale vô hạn</p>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  Click chuột phải vào logo bất kỳ → "Save image as..." để export PNG.<br>
+  Khi đã chọn, báo tôi số thứ tự (1-8) để tách thành file riêng & tinh chỉnh.
+</footer>
+
+<script>
+// ===== Helper: render pixel art from 2D array =====
+function pixelSVG(grid, palette, size=24, bg=null, rounded=true) {
+  let rects = '';
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      const c = grid[y][x];
+      if (c === 0 || c === '.') continue;
+      const color = palette[c];
+      if (!color) continue;
+      rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+    }
+  }
+  const bgRect = bg ? `<rect width="${size}" height="${size}" fill="url(#bg)"/>` : '';
+  const defs = bg ? `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      ${bg.map((stop, i) => `<stop offset="${i/(bg.length-1)*100}%" stop-color="${stop}"/>`).join('')}
+    </linearGradient></defs>` : '';
+  const clipId = 'clip' + Math.random().toString(36).slice(2,8);
+  const clip = rounded ? `<defs><clipPath id="${clipId}"><rect width="${size}" height="${size}" rx="4" ry="4"/></clipPath></defs>` : '';
+  return `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+    ${defs}${clip}
+    <g ${rounded ? `clip-path="url(#${clipId})"` : ''}>
+      ${bgRect}${rects}
+    </g>
+  </svg>`;
+}
+
+// ===== Common sunset palette inspired by reference image =====
+const sunsetBG = ['#1a2348', '#3d3568', '#7a4a72', '#c97a6e', '#f4c97a'];
+
+// ===========================================================
+// LOGO 1: Sunset Skyline — silhouette city + giant sun
+// ===========================================================
+const logo1 = [
+  '........................',
+  '........................',
+  '........................',
+  '........SSSSSSSS........',
+  '......SSSSSSSSSSSS......',
+  '.....SSSSSSSSSSSSSS.....',
+  '.....SSSSSSSSSSSSSS.....',
+  '.....SSSSSSSSSSSSSS.....',
+  '......SSSSSSSSSSSS......',
+  '........SSSSSSSS........',
+  '........................',
+  '...B....BB....B...BB....',
+  '...B..B.BB..B.B...BB....',
+  '.B.B..B.BB..B.B..BBB..B.',
+  '.B.B.BB.BB.BB.B.BBBB.BB.',
+  'BBBBBBBBBBBBBBBBBBBBBBBB',
+  'BBBBBBBBBBBBBBBBBBBBBBBB',
+  'BBBBBBBBBBBBBBBBBBBBBBBB',
+  'wwwwwwwwwwwwwwwwwwwwwwww',
+  '.wwwwwwwwwwwwwwwwwwwww..',
+  '..www.wwww.wwwww.www....',
+  '........................',
+  '........................',
+  '........................',
+];
+const palette1 = { S: '#ffd97a', B: '#1a1a2e', w: '#5a8fc4' };
+const bg1 = ['#1a2348', '#4a3a6e', '#c97a6e', '#f4c97a'];
+
+// ===========================================================
+// LOGO 2: Mountain Bridge — 2 núi + cầu nối (= "mates")
+// ===========================================================
+const logo2 = [
+  '........................',
+  '........................',
+  '........................',
+  '...........s............',
+  '..........sss...........',
+  '.........M...M..........',
+  '........MMM.MMM.........',
+  '.......MMMM.MMMM........',
+  '.....MMMMMMmMMMMMM......',
+  '....MMMMMMMmMMMMMMM.....',
+  '...MMMMMMMMmMMMMMMMM....',
+  '..MMMMMMMMMmMMMMMMMMM...',
+  '.MMMMMMMMMMmMMMMMMMMMM..',
+  'MMMMMMMMMMMmMMMMMMMMMMM.',
+  '...........|............',
+  '.bbb..bbb..|..bbb..bbb..',
+  'bbbbbbbbbbb|bbbbbbbbbbbb',
+  '...........|............',
+  'wwwwwwwwwwwwwwwwwwwwwwww',
+  '~~~~~~~~~~~~~~~~~~~~~~~~',
+  'wwwwwwwwwwwwwwwwwwwwwwww',
+  '~~~~~~~~~~~~~~~~~~~~~~~~',
+  '........................',
+  '........................',
+];
+const palette2 = { M: '#2a2350', m: '#f4c97a', s: '#fff2c4', '|': '#ffd97a', b: '#3a3060', w: '#4a6fa8', '~': '#5a8fc4' };
+const bg2 = ['#1a2348', '#4a3a6e', '#c97a6e', '#f4c97a'];
+
+// ===========================================================
+// LOGO 3: Heart City — skyline tạo hình trái tim
+// ===========================================================
+const logo3 = [
+  '........................',
+  '........................',
+  '....HHHH......HHHH......',
+  '...HHHHHH....HHHHHH.....',
+  '..HHHbbHHHHHHHHbbHHH....',
+  '..HHbbbHHHbbHHHbbbHH....',
+  '..HHbbbHHHbbHHHbbbHH....',
+  '..HHHHHHHHHHHHHHHHHH....',
+  '..HHHbbHHHbbHHHbbHHH....',
+  '..HHHbbHHHbbHHHbbHHH....',
+  '...HHHHHHHHHHHHHHHH.....',
+  '...HHHbbHHHbbHHHbbH.....',
+  '....HHHHHHHHHHHHHH......',
+  '....HHHbbHHHbbHHHb......',
+  '.....HHHHHHHHHHHH.......',
+  '.....HHHbbHHHbbH........',
+  '......HHHHHHHHH.........',
+  '......HHHbbHHH..........',
+  '.......HHHHH............',
+  '.......HHHb.............',
+  '........HHH.............',
+  '........H...............',
+  '........................',
+  '........................',
+];
+const palette3 = { H: '#ff5e7a', b: '#ffd97a' };
+const bg3 = ['#1a2348', '#3d3568', '#7a4a72', '#c97a6e'];
+
+// ===========================================================
+// LOGO 4: AM Monogram — chữ "AM" pixel block
+// ===========================================================
+const logo4 = [
+  '........................',
+  '........................',
+  '........................',
+  '...AAAAA......MM...MM...',
+  '...AAAAAA....MMMM.MMMM..',
+  '..AA...AA....MMMMMMMMM..',
+  '..AA...AA....MMMMMMMMM..',
+  '..AA...AA....MM.MMM.MM..',
+  '..AAAAAAA....MM.MMM.MM..',
+  '..AAAAAAA....MM..M..MM..',
+  '..AA...AA....MM.....MM..',
+  '..AA...AA....MM.....MM..',
+  '..AA...AA....MM.....MM..',
+  '........................',
+  '........................',
+  '....ssssssssssssss......',
+  '...sssssssssssssss......',
+  '....ssssssssssssss......',
+  '........................',
+  '.B.B...B...B...B.B..B.B.',
+  'BBBBBBBBBBBBBBBBBBBBBBBB',
+  'BBBBBBBBBBBBBBBBBBBBBBBB',
+  '........................',
+  '........................',
+];
+const palette4 = { A: '#fff2c4', M: '#fff2c4', s: '#ffd97a', B: '#1a1a2e' };
+const bg4 = ['#1a2348', '#4a3a6e', '#c97a6e', '#f4c97a'];
+
+// ===========================================================
+// LOGO 5: Sun Rising — half sun behind buildings (minimal)
+// ===========================================================
+const logo5 = [
+  '........................',
+  '........................',
+  '..........SS............',
+  '........SSSSSS..........',
+  '......SSSSSSSSSS........',
+  '.....SSSSSSSSSSSS.......',
+  '....SSSSSSSSSSSSSS......',
+  '...SSSSSSSSSSSSSSSS.....',
+  '..SSSSSSSSSSSSSSSSSS....',
+  '..SSSSSSSSSSSSSSSSSS....',
+  '.SSSSSSSSSSSSSSSSSSSS...',
+  '.SSSSSSSSSSSSSSSSSSSS...',
+  '.SSSSSSSSSSSSSSSSSSSS...',
+  '..SSSSSSSSSSSSSSSSSS....',
+  '..SSSSSSSSSSSSSSSSSS....',
+  '...SSSSSSSSSSSSSSSS.....',
+  '....SSSSSSSSSSSSSS......',
+  '.....BBBBBBBBBBBB.......',
+  '...BBBBBBBBBBBBBBBB.....',
+  '..BBBBBBBBBBBBBBBBBB....',
+  '.BBBBBBBBBBBBBBBBBBBB...',
+  'BBBBBBBBBBBBBBBBBBBBBB..',
+  '........................',
+  '........................',
+];
+const palette5 = { S: '#ffd97a', B: '#1a1a2e' };
+const bg5 = ['#2a2860', '#7a4a72', '#e89860', '#f4c97a'];
+
+// ===========================================================
+// LOGO 6: Location Pin + Skyline inside
+// ===========================================================
+const logo6 = [
+  '........................',
+  '.......PPPPPPPP.........',
+  '.....PPPPPPPPPPPP.......',
+  '....PPPPPPPPPPPPPP......',
+  '...PPP..........PPP.....',
+  '..PPP....SSSS....PPP....',
+  '..PP....SSSSSS....PP....',
+  '..PP...SSSSSSSS...PP....',
+  '..PP....SSSSSS....PP....',
+  '..PP.....SSSS.....PP....',
+  '..PP..............PP....',
+  '..PP..B..BB..B..B.PP....',
+  '..PP.BB..BB.BB..BBPP....',
+  '...PP.BBBBBBBBBBBPP.....',
+  '....PPPPPPPPPPPPPP......',
+  '.....PPPPPPPPPPPP.......',
+  '......PPPPPPPPPP........',
+  '.......PPPPPPPP.........',
+  '........PPPPPP..........',
+  '.........PPPP...........',
+  '..........PP............',
+  '..........P.............',
+  '........................',
+  '........................',
+];
+const palette6 = { P: '#ff7a6e', S: '#ffd97a', B: '#1a1a2e' };
+const bg6 = ['#1a2348', '#4a3a6e', '#7a4a72', '#c97a6e'];
+
+// ===========================================================
+// LOGO 7: Compass Rose Sun — vibe + discovery
+// ===========================================================
+const logo7 = [
+  '........................',
+  '...........R............',
+  '..........RRR...........',
+  '..........RRR...........',
+  '.........RRRRR..........',
+  '..R......RRRRR......R...',
+  '..RR....SSSSSSS....RR...',
+  '..RRR..SSSSSSSSS..RRR...',
+  '...RRRSSSSCCSSSSSRRR....',
+  '....RRSSSCCCCSSSSRR.....',
+  '.RRRRRSSCCCCCCSSRRRRR...',
+  'RRRRRSSSCCCCCCSSSSRRRRR.',
+  '.RRRRRSSCCCCCCSSRRRRR...',
+  '....RRSSSCCCCSSSSRR.....',
+  '...RRRSSSSCCSSSSSRRR....',
+  '..RRR..SSSSSSSSS..RRR...',
+  '..RR....SSSSSSS....RR...',
+  '..R......RRRRR......R...',
+  '.........RRRRR..........',
+  '..........RRR...........',
+  '..........RRR...........',
+  '...........R............',
+  '........................',
+  '........................',
+];
+const palette7 = { R: '#ff7a6e', S: '#ffd97a', C: '#fff2c4' };
+const bg7 = ['#1a2348', '#4a3a6e', '#7a4a72', '#c97a6e'];
+
+// ===========================================================
+// LOGO 8: Vibe Wave — sóng + sun (minimalist)
+// ===========================================================
+const logo8 = [
+  '........................',
+  '........................',
+  '..........SSSS..........',
+  '........SSSSSSSS........',
+  '.......SSSSSSSSSS.......',
+  '......SSSSSSSSSSSS......',
+  '......SSSSSSSSSSSS......',
+  '.......SSSSSSSSSS.......',
+  '........SSSSSSSS........',
+  '..........SSSS..........',
+  '........................',
+  '....ww................ww',
+  '...wwww..............www',
+  '..ww..www..........www..',
+  '.ww.....wwww....wwww....',
+  'ww........wwwwwwww......',
+  '........................',
+  '....bb................bb',
+  '...bbbb..............bbb',
+  '..bb..bbb..........bbb..',
+  '.bb.....bbbb....bbbb....',
+  'bb........bbbbbbbb......',
+  '........................',
+  '........................',
+];
+const palette8 = { S: '#ffd97a', w: '#fff2c4', b: '#ff7a6e' };
+const bg8 = ['#1a2348', '#3d3568', '#7a4a72', '#c97a6e'];
+
+// ===== Render all =====
+const concepts = [
+  { num: 1, name: 'Sunset Skyline', desc: 'Mặt trời lớn + silhouette thành phố — gợi không khí hoàng hôn của ảnh gốc.', grid: logo1, palette: palette1, bg: bg1 },
+  { num: 2, name: 'Mountain Bridge', desc: 'Hai ngọn núi nối bằng cây cầu — ẩn dụ "mates" kết nối qua khoảng cách.', grid: logo2, palette: palette2, bg: bg2 },
+  { num: 3, name: 'Heart City', desc: 'Cụm tòa nhà xếp thành trái tim — connection + đô thị.', grid: logo3, palette: palette3, bg: bg3 },
+  { num: 4, name: 'AM Monogram', desc: 'Chữ "AM" pixel block trên nền skyline tối giản — đậm chất app icon.', grid: logo4, palette: palette4, bg: bg4 },
+  { num: 5, name: 'Sun Rising', desc: 'Mặt trời mọc sau dãy nhà — tối giản, dễ nhận diện ở mọi kích thước.', grid: logo5, palette: palette5, bg: bg5 },
+  { num: 6, name: 'Pin + City', desc: 'Location pin chứa skyline bên trong — "khám phá địa điểm" cụ thể.', grid: logo6, palette: palette6, bg: bg6 },
+  { num: 7, name: 'Compass Sun', desc: 'Mặt trời + 4 hướng la bàn — discovery vibe.', grid: logo7, palette: palette7, bg: bg7 },
+  { num: 8, name: 'Vibe Wave', desc: 'Mặt trời + sóng nước — chill, calm, "an" trong AnMates.', grid: logo8, palette: palette8, bg: bg8 },
+];
+
+const grid = document.getElementById('grid');
+concepts.forEach(c => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="logo-box">${pixelSVG(c.grid, c.palette, 24, c.bg, true)}</div>
+    <div class="label">${c.num}. ${c.name}</div>
+    <div class="desc">${c.desc}</div>
+    <div class="small-row">
+      ${pixelSVG(c.grid, c.palette, 24, c.bg, true).replace('width="180"', 'width="56"').replace('height="180"', 'height="56"')}
+      ${pixelSVG(c.grid, c.palette, 24, c.bg, true)}
+    </div>
+  `;
+  // adjust small previews
+  const svgs = card.querySelectorAll('.small-row svg');
+  svgs[0].setAttribute('class', 'mid');
+  grid.appendChild(card);
+});
+</script>
+
+</body>
+</html>

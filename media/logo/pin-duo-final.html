@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>AnMates — Pin Duo Logo Final</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  background: #060612;
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Ambient background ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(255,60,172,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 25%, rgba(255,140,66,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 50% 80%, rgba(120,75,160,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Hero section ── */
+.hero {
+  position: relative; z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px 40px;
+  text-align: center;
+}
+
+.hero-label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  background: linear-gradient(135deg, #ff3cac, #ff8c42, #ffd97a);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.hero .tagline {
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 48px;
+  font-weight: 300;
+}
+
+/* ── Main logo display ── */
+.logo-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.logo-glow-ring {
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,60,172,0.18) 0%, rgba(255,140,66,0.10) 40%, transparent 70%);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+#main-logo {
+  width: 220px; height: 220px;
+  filter: drop-shadow(0 0 32px rgba(255,60,172,0.35)) drop-shadow(0 0 80px rgba(255,140,66,0.2));
+  border-radius: 44px;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ── App Store mock ── */
+.store-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 60px;
+}
+
+.btn-store {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff3cac, #ff8c42);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(255,60,172,0.4), 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 40px rgba(255,60,172,0.5); }
+
+.btn-secondary {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover { background: rgba(255,255,255,0.13); transform: translateY(-2px); }
+
+.btn-icon { font-size: 22px; line-height: 1; }
+.btn-text-small { font-size: 10px; font-weight: 400; opacity: 0.8; display: block; }
+
+/* ── Stats bar ── */
+.stats {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 20px 40px;
+  background: rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 60px;
+}
+
+.stat { text-align: center; }
+.stat-num { font-size: 22px; font-weight: 700; background: linear-gradient(90deg,#ff3cac,#ff8c42); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.stat-lbl { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* ── Color variants ── */
+.section { max-width: 1000px; margin: 0 auto 60px; padding: 0 20px; }
+.section-title {
+  font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(255,255,255,0.35); margin-bottom: 24px; text-align: center;
+}
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.variant-card {
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid transparent;
+  background: rgba(255,255,255,0.04);
+}
+
+.variant-card:hover { transform: translateY(-4px); }
+.variant-card.active { border-color: rgba(255,255,255,0.3); }
+.variant-card svg { width: 120px; height: 120px; margin-bottom: 12px; }
+.variant-name { font-size: 13px; font-weight: 600; }
+.variant-mood { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+/* ── Size preview ── */
+.size-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 32px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.size-item { text-align: center; }
+.size-item svg { display: block; margin: 0 auto; }
+.size-label { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 8px; }
+
+/* ── Context previews ── */
+.context-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.context-card {
+  border-radius: 20px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ctx-dark { background: #1c1c1e; }
+.ctx-light { background: #f2f2f7; color: #1c1c1e; }
+.ctx-blur {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.ctx-label { font-size: 11px; opacity: 0.5; letter-spacing: 1px; text-transform: uppercase; }
+.ctx-appname { font-size: 13px; font-weight: 600; margin-top: 4px; }
+.ctx-light .ctx-appname { color: #1c1c1e; }
+.ctx-light .ctx-label { color: #8e8e93; }
+
+/* ── Notification preview ── */
+.notif {
+  background: rgba(28,28,30,0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 360px;
+  margin: 0 auto;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.notif-icon svg { width: 40px; height: 40px; border-radius: 10px; }
+.notif-text .notif-app { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+.notif-text .notif-msg { font-size: 13px; font-weight: 500; }
+.notif-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-left: auto; white-space: nowrap; }
+
+footer {
+  text-align: center;
+  padding: 40px 20px 60px;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+  line-height: 2;
+}
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-label">AnMates · App Icon</div>
+  <h1>Pin Duo</h1>
+  <p class="tagline">Hai người · Một địa điểm · Bữa ăn đáng nhớ</p>
+
+  <div class="logo-stage">
+    <div class="logo-glow-ring"></div>
+    <svg id="main-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Background gradient -->
+        <radialGradient id="bg-main" cx="50%" cy="35%" r="70%">
+          <stop offset="0%" stop-color="#1e0a3c"/>
+          <stop offset="100%" stop-color="#070714"/>
+        </radialGradient>
+        <!-- Pin A: hot pink → violet -->
+        <linearGradient id="pinA" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff3cac"/>
+          <stop offset="100%" stop-color="#9b2ff7"/>
+        </linearGradient>
+        <!-- Pin B: orange → red -->
+        <linearGradient id="pinB" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ff8c42"/>
+          <stop offset="100%" stop-color="#ff3c3c"/>
+        </linearGradient>
+        <!-- Center orb -->
+        <radialGradient id="orb" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#fff9e6"/>
+          <stop offset="40%" stop-color="#ffd97a"/>
+          <stop offset="100%" stop-color="#ff8c42"/>
+        </radialGradient>
+        <!-- Center glow -->
+        <radialGradient id="glow-c" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#ffd97a" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#ff3cac" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Path glow A -->
+        <filter id="blur-sm">
+          <feGaussianBlur stdDeviation="1.2"/>
+        </filter>
+        <filter id="blur-lg">
+          <feGaussianBlur stdDeviation="3"/>
+        </filter>
+        <!-- Inner shadow on orb -->
+        <filter id="orb-shadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#ff8c42" flood-opacity="0.8"/>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <circle cx="50" cy="50" r="50" fill="url(#bg-main)"/>
+
+      <!-- Subtle star field -->
+      <circle cx="12" cy="12" r="0.7" fill="#fff" opacity="0.4"/>
+      <circle cx="88" cy="10" r="0.6" fill="#fff" opacity="0.35"/>
+      <circle cx="8"  cy="55" r="0.5" fill="#fff" opacity="0.25"/>
+      <circle cx="92" cy="60" r="0.5" fill="#fff" opacity="0.25"/>
+      <circle cx="50" cy="8"  r="0.6" fill="#fff" opacity="0.3"/>
+      <circle cx="22" cy="78" r="0.4" fill="#fff" opacity="0.2"/>
+      <circle cx="78" cy="80" r="0.4" fill="#fff" opacity="0.2"/>
+      <circle cx="35" cy="88" r="0.4" fill="#fff" opacity="0.15"/>
+      <circle cx="65" cy="90" r="0.4" fill="#fff" opacity="0.15"/>
+
+      <!-- Path glow (blurred) -->
+      <path d="M22 72 C22 56 34 46 50 46" stroke="#ff3cac" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#blur-sm)" opacity="0.5"/>
+      <path d="M78 72 C78 56 66 46 50 46" stroke="#ff8c42" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#blur-sm)" opacity="0.5"/>
+
+      <!-- Path lines (crisp dashed) -->
+      <path d="M22 72 C22 56 34 46 50 46" stroke="#ff3cac" stroke-width="1.5" stroke-dasharray="3.5 3" fill="none" stroke-linecap="round" opacity="0.9"/>
+      <path d="M78 72 C78 56 66 46 50 46" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="3.5 3" fill="none" stroke-linecap="round" opacity="0.9"/>
+
+      <!-- Dot nodes on paths -->
+      <circle cx="28" cy="63" r="1.5" fill="#ff3cac" opacity="0.7"/>
+      <circle cx="36" cy="54" r="1.5" fill="#ff3cac" opacity="0.7"/>
+      <circle cx="72" cy="63" r="1.5" fill="#ff8c42" opacity="0.7"/>
+      <circle cx="64" cy="54" r="1.5" fill="#ff8c42" opacity="0.7"/>
+
+      <!-- PIN LEFT — hot pink/violet -->
+      <!-- Drop shadow -->
+      <path d="M22 48 C22 37 14 27 14 20 C14 10 30 10 30 20 C30 27 22 37 22 48Z" fill="#ff3cac" opacity="0.25" filter="url(#blur-lg)" transform="translate(0,4)"/>
+      <!-- Pin body -->
+      <path d="M22 48 C22 37 14 27 14 20 C14 10 30 10 30 20 C30 27 22 37 22 48Z" fill="url(#pinA)"/>
+      <!-- Pin highlight -->
+      <path d="M17 15 Q19 12 23 13 Q20 13 18 17Z" fill="#fff" opacity="0.35"/>
+      <!-- Person icon in pin -->
+      <circle cx="22" cy="18" r="4" fill="#fff" opacity="0.95"/>
+      <path d="M15.5 28 Q15.5 22 22 22 Q28.5 22 28.5 28" fill="#fff" opacity="0.95"/>
+
+      <!-- PIN RIGHT — orange/red -->
+      <path d="M78 48 C78 37 70 27 70 20 C70 10 86 10 86 20 C86 27 78 37 78 48Z" fill="#ff8c42" opacity="0.25" filter="url(#blur-lg)" transform="translate(0,4)"/>
+      <path d="M78 48 C78 37 70 27 70 20 C70 10 86 10 86 20 C86 27 78 37 78 48Z" fill="url(#pinB)"/>
+      <path d="M73 15 Q75 12 79 13 Q76 13 74 17Z" fill="#fff" opacity="0.35"/>
+      <circle cx="78" cy="18" r="4" fill="#fff" opacity="0.95"/>
+      <path d="M71.5 28 Q71.5 22 78 22 Q84.5 22 84.5 28" fill="#fff" opacity="0.95"/>
+
+      <!-- CENTER GLOW aura -->
+      <circle cx="50" cy="46" r="20" fill="url(#glow-c)"/>
+
+      <!-- CENTER PLATE / ORB -->
+      <circle cx="50" cy="46" r="14" fill="url(#orb)" filter="url(#orb-shadow)"/>
+      <!-- Plate rim -->
+      <circle cx="50" cy="46" r="14" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+      <!-- Inner plate -->
+      <circle cx="50" cy="46" r="9.5" fill="rgba(255,255,255,0.12)"/>
+
+      <!-- FORK (left of center) -->
+      <g transform="rotate(-18, 50, 46)">
+        <!-- Handle -->
+        <rect x="43.5" y="48" width="2.5" height="10" rx="1.25" fill="#fff"/>
+        <!-- Neck -->
+        <rect x="44" y="40" width="1.5" height="10" rx="0.75" fill="#fff"/>
+        <!-- Tines -->
+        <rect x="42.5" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+        <rect x="44.4" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+        <rect x="46.3" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+      </g>
+
+      <!-- SPOON (right of center) -->
+      <g transform="rotate(18, 50, 46)">
+        <ellipse cx="56" cy="38" rx="3" ry="4" fill="#fff"/>
+        <rect x="54.5" y="41" width="3" height="17" rx="1.5" fill="#fff"/>
+      </g>
+
+      <!-- CENTER STAR SPARK -->
+      <path d="M50 41.5 L50.9 44.2 L53.8 44.2 L51.5 45.9 L52.4 48.6 L50 47 L47.6 48.6 L48.5 45.9 L46.2 44.2 L49.1 44.2Z" fill="#fff"/>
+
+      <!-- Sparkle dots -->
+      <circle cx="38" cy="38" r="1.2" fill="#ff3cac" opacity="0.8"/>
+      <circle cx="62" cy="36" r="1.2" fill="#ff8c42" opacity="0.8"/>
+      <circle cx="36" cy="58" r="0.9" fill="#ffd97a" opacity="0.6"/>
+      <circle cx="64" cy="56" r="0.9" fill="#ffd97a" opacity="0.6"/>
+      <circle cx="50" cy="74" r="1.2" fill="#ff3cac" opacity="0.4"/>
+
+      <!-- BOTTOM LABEL AREA -->
+      <rect x="14" y="74" width="72" height="22" rx="6" fill="rgba(255,255,255,0.05)"/>
+      <!-- "AnMates" text -->
+      <text x="50" y="87" text-anchor="middle" font-family="-apple-system,SF Pro Display,system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff" letter-spacing="0.5">AnMates</text>
+      <text x="50" y="93" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif" font-size="4.5" fill="rgba(255,255,255,0.5)" letter-spacing="0.3">Meet · Eat · Explore</text>
+    </svg>
+  </div>
+
+  <!-- App Store buttons -->
+  <div class="store-buttons">
+    <a class="btn-store btn-primary" href="#">
+      <span class="btn-icon">⬇</span>
+      <div><span class="btn-text-small">Tải về trên</span>App Store</div>
+    </a>
+    <a class="btn-store btn-secondary" href="#">
+      <span class="btn-icon">▶</span>
+      <div><span class="btn-text-small">Có trên</span>Google Play</div>
+    </a>
+  </div>
+</div>
+
+<!-- ── STATS ── -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">4.9★</div><div class="stat-lbl">Đánh giá</div></div>
+  <div class="stat"><div class="stat-num">50K+</div><div class="stat-lbl">Người dùng</div></div>
+  <div class="stat"><div class="stat-num">#1</div><div class="stat-lbl">Social · VN</div></div>
+  <div class="stat"><div class="stat-num">Free</div><div class="stat-lbl">Tải miễn phí</div></div>
+</div>
+
+<!-- ── COLOR VARIANTS ── -->
+<div class="section">
+  <div class="section-title">Biến thể màu — click để áp dụng lên logo chính</div>
+  <div class="variants" id="variants"></div>
+</div>
+
+<!-- ── SIZE PREVIEW ── -->
+<div class="section">
+  <div class="section-title">Preview kích thước thực</div>
+  <div class="size-row" id="size-row"></div>
+</div>
+
+<!-- ── CONTEXT PREVIEWS ── -->
+<div class="section">
+  <div class="section-title">Trông như thế nào trong thực tế</div>
+  <div class="context-row">
+    <!-- Phone homescreen dark -->
+    <div class="context-card ctx-dark">
+      <svg id="ctx-logo-1" viewBox="0 0 100 100" width="60" height="60" style="border-radius:14px;"></svg>
+      <div class="ctx-label">Home Screen · Dark</div>
+      <div class="ctx-appname">AnMates</div>
+    </div>
+    <!-- Phone homescreen light -->
+    <div class="context-card ctx-light">
+      <svg id="ctx-logo-2" viewBox="0 0 100 100" width="60" height="60" style="border-radius:14px;"></svg>
+      <div class="ctx-label">Home Screen · Light</div>
+      <div class="ctx-appname" style="color:#1c1c1e">AnMates</div>
+    </div>
+    <!-- Blur glass -->
+    <div class="context-card ctx-blur">
+      <svg id="ctx-logo-3" viewBox="0 0 100 100" width="60" height="60" style="border-radius:14px;"></svg>
+      <div class="ctx-label">Widget · Blur</div>
+      <div class="ctx-appname">AnMates</div>
+    </div>
+    <!-- Notification -->
+    <div class="context-card ctx-dark" style="justify-content:center;">
+      <div class="ctx-label" style="margin-bottom:8px">Push Notification</div>
+      <div class="notif">
+        <div class="notif-icon"><svg id="ctx-logo-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div class="notif-text">
+          <div class="notif-app">AnMates</div>
+          <div class="notif-msg">Minh đang ở gần bạn! Đi ăn không? 🍜</div>
+        </div>
+        <div class="notif-time">Vừa xong</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Chọn biến thể màu ưng ý → báo tôi để xuất SVG + bộ PNG đầy đủ (20×20 → 1024×1024)<br>
+  sẵn sàng đưa vào <code>Assets.xcassets/AppIcon.appiconset</code>
+</footer>
+
+<script>
+// ── Color variant definitions ──
+const VARIANTS = [
+  {
+    name: 'Vibe Night',
+    mood: '🌃 Premium · Dark · Exciting',
+    bg: ['#1e0a3c', '#070714'],
+    pinA: ['#ff3cac', '#9b2ff7'],
+    pinB: ['#ff8c42', '#ff3c3c'],
+    orb: ['#fff9e6', '#ffd97a', '#ff8c42'],
+    glow: 'rgba(255,60,172,0.5)',
+    paths: ['#ff3cac', '#ff8c42'],
+    box: 'linear-gradient(135deg,#ff3cac,#9b2ff7)',
+  },
+  {
+    name: 'Golden Hour',
+    mood: '🌅 Warm · Sunset · Romantic',
+    bg: ['#2a0e00', '#0a0500'],
+    pinA: ['#ff6b35', '#c23b00'],
+    pinB: ['#ffd166', '#ff9a3c'],
+    orb: ['#fffbe0', '#ffd97a', '#ff6b35'],
+    glow: 'rgba(255,209,102,0.5)',
+    paths: ['#ff6b35', '#ffd166'],
+    box: 'linear-gradient(135deg,#ffd166,#ff6b35)',
+  },
+  {
+    name: 'Neon City',
+    mood: '🏙️ Electric · Urban · Night out',
+    bg: ['#001832', '#000810'],
+    pinA: ['#00d4ff', '#0066ff'],
+    pinB: ['#ff00aa', '#8800ff'],
+    orb: ['#e0ffff', '#00d4ff', '#0066ff'],
+    glow: 'rgba(0,212,255,0.5)',
+    paths: ['#00d4ff', '#ff00aa'],
+    box: 'linear-gradient(135deg,#00d4ff,#ff00aa)',
+  },
+  {
+    name: 'Fresh Matcha',
+    mood: '🍃 Chill · Daytime · Outdoor',
+    bg: ['#0a2010', '#030a04'],
+    pinA: ['#4ade80', '#16a34a'],
+    pinB: ['#facc15', '#f97316'],
+    orb: ['#f0fff4', '#bbf7d0', '#4ade80'],
+    glow: 'rgba(74,222,128,0.45)',
+    paths: ['#4ade80', '#facc15'],
+    box: 'linear-gradient(135deg,#4ade80,#facc15)',
+  },
+];
+
+// Build SVG string from variant config
+function buildSVG(v, size=100) {
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg-v" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="${v.bg[0]}"/>
+      <stop offset="100%" stop-color="${v.bg[1]}"/>
+    </radialGradient>
+    <linearGradient id="pA-v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${v.pinA[0]}"/>
+      <stop offset="100%" stop-color="${v.pinA[1]}"/>
+    </linearGradient>
+    <linearGradient id="pB-v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${v.pinB[0]}"/>
+      <stop offset="100%" stop-color="${v.pinB[1]}"/>
+    </linearGradient>
+    <radialGradient id="orb-v" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="${v.orb[0]}"/>
+      <stop offset="40%" stop-color="${v.orb[1]}"/>
+      <stop offset="100%" stop-color="${v.orb[2]}"/>
+    </radialGradient>
+    <radialGradient id="glw-v" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${v.glow}"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="bl-v"><feGaussianBlur stdDeviation="1.5"/></filter>
+    <filter id="bl2-v"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#bg-v)"/>
+  <circle cx="12" cy="12" r="0.7" fill="#fff" opacity="0.35"/>
+  <circle cx="88" cy="10" r="0.6" fill="#fff" opacity="0.3"/>
+  <circle cx="8" cy="55" r="0.5" fill="#fff" opacity="0.2"/>
+  <circle cx="92" cy="60" r="0.5" fill="#fff" opacity="0.2"/>
+  <circle cx="50" cy="8" r="0.6" fill="#fff" opacity="0.25"/>
+  <!-- Path glow -->
+  <path d="M22 72 C22 56 34 46 50 46" stroke="${v.paths[0]}" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#bl-v)" opacity="0.5"/>
+  <path d="M78 72 C78 56 66 46 50 46" stroke="${v.paths[1]}" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#bl-v)" opacity="0.5"/>
+  <!-- Path lines -->
+  <path d="M22 72 C22 56 34 46 50 46" stroke="${v.paths[0]}" stroke-width="1.5" stroke-dasharray="3.5 3" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M78 72 C78 56 66 46 50 46" stroke="${v.paths[1]}" stroke-width="1.5" stroke-dasharray="3.5 3" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="28" cy="63" r="1.5" fill="${v.paths[0]}" opacity="0.7"/>
+  <circle cx="36" cy="54" r="1.5" fill="${v.paths[0]}" opacity="0.7"/>
+  <circle cx="72" cy="63" r="1.5" fill="${v.paths[1]}" opacity="0.7"/>
+  <circle cx="64" cy="54" r="1.5" fill="${v.paths[1]}" opacity="0.7"/>
+  <!-- Pin A shadow -->
+  <path d="M22 48 C22 37 14 27 14 20 C14 10 30 10 30 20 C30 27 22 37 22 48Z" fill="${v.pinA[0]}" opacity="0.2" filter="url(#bl2-v)" transform="translate(0,4)"/>
+  <!-- Pin A -->
+  <path d="M22 48 C22 37 14 27 14 20 C14 10 30 10 30 20 C30 27 22 37 22 48Z" fill="url(#pA-v)"/>
+  <path d="M17 15 Q19 12 23 13 Q20 13 18 17Z" fill="#fff" opacity="0.35"/>
+  <circle cx="22" cy="18" r="4" fill="#fff" opacity="0.95"/>
+  <path d="M15.5 28 Q15.5 22 22 22 Q28.5 22 28.5 28" fill="#fff" opacity="0.95"/>
+  <!-- Pin B shadow -->
+  <path d="M78 48 C78 37 70 27 70 20 C70 10 86 10 86 20 C86 27 78 37 78 48Z" fill="${v.pinB[0]}" opacity="0.2" filter="url(#bl2-v)" transform="translate(0,4)"/>
+  <!-- Pin B -->
+  <path d="M78 48 C78 37 70 27 70 20 C70 10 86 10 86 20 C86 27 78 37 78 48Z" fill="url(#pB-v)"/>
+  <path d="M73 15 Q75 12 79 13 Q76 13 74 17Z" fill="#fff" opacity="0.35"/>
+  <circle cx="78" cy="18" r="4" fill="#fff" opacity="0.95"/>
+  <path d="M71.5 28 Q71.5 22 78 22 Q84.5 22 84.5 28" fill="#fff" opacity="0.95"/>
+  <!-- Glow aura -->
+  <circle cx="50" cy="46" r="20" fill="url(#glw-v)"/>
+  <!-- Orb -->
+  <circle cx="50" cy="46" r="14" fill="url(#orb-v)"/>
+  <circle cx="50" cy="46" r="14" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+  <circle cx="50" cy="46" r="9.5" fill="rgba(255,255,255,0.12)"/>
+  <!-- Fork -->
+  <g transform="rotate(-18,50,46)">
+    <rect x="43.5" y="48" width="2.5" height="10" rx="1.25" fill="#fff"/>
+    <rect x="44" y="40" width="1.5" height="10" rx="0.75" fill="#fff"/>
+    <rect x="42.5" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+    <rect x="44.4" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+    <rect x="46.3" y="35" width="1.2" height="8" rx="0.6" fill="#fff"/>
+  </g>
+  <!-- Spoon -->
+  <g transform="rotate(18,50,46)">
+    <ellipse cx="56" cy="38" rx="3" ry="4" fill="#fff"/>
+    <rect x="54.5" y="41" width="3" height="17" rx="1.5" fill="#fff"/>
+  </g>
+  <!-- Star spark -->
+  <path d="M50 41.5 L50.9 44.2 L53.8 44.2 L51.5 45.9 L52.4 48.6 L50 47 L47.6 48.6 L48.5 45.9 L46.2 44.2 L49.1 44.2Z" fill="#fff"/>
+  <!-- Bottom label -->
+  <rect x="14" y="74" width="72" height="22" rx="6" fill="rgba(255,255,255,0.05)"/>
+  <text x="50" y="87" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif" font-size="8" font-weight="700" fill="#fff" letter-spacing="0.5">AnMates</text>
+  <text x="50" y="93" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif" font-size="4.5" fill="rgba(255,255,255,0.5)" letter-spacing="0.3">Meet · Eat · Explore</text>
+</svg>`;
+}
+
+// Render variant cards
+const varGrid = document.getElementById('variants');
+VARIANTS.forEach((v, i) => {
+  const card = document.createElement('div');
+  card.className = 'variant-card' + (i === 0 ? ' active' : '');
+  card.style.background = `linear-gradient(160deg, ${v.bg[0]}ee, ${v.bg[1]}cc)`;
+  card.style.borderColor = i === 0 ? v.pinA[0] : 'transparent';
+  card.innerHTML = `
+    <div style="background:${v.box};width:8px;height:8px;border-radius:50%;margin:0 auto 12px;box-shadow:0 0 8px ${v.pinA[0]}"></div>
+    ${buildSVG(v)}
+    <div class="variant-name">${v.name}</div>
+    <div class="variant-mood">${v.mood}</div>
+  `;
+  card.addEventListener('click', () => {
+    // Update main logo
+    document.getElementById('main-logo').innerHTML = card.querySelector('svg').innerHTML;
+    // Update glow ring color
+    document.querySelector('.logo-glow-ring').style.background =
+      `radial-gradient(circle, ${v.pinA[0]}30 0%, ${v.pinB[0]}18 40%, transparent 70%)`;
+    // Update filter
+    document.getElementById('main-logo').style.filter =
+      `drop-shadow(0 0 32px ${v.pinA[0]}60) drop-shadow(0 0 80px ${v.pinB[0]}30)`;
+    // Update active state
+    document.querySelectorAll('.variant-card').forEach((c,j) => {
+      c.classList.toggle('active', j === i);
+      c.style.borderColor = j === i ? v.pinA[0] : 'transparent';
+    });
+    // Update size row & context logos
+    renderSizes(v);
+    renderContext(v);
+  });
+  varGrid.appendChild(card);
+});
+
+// Render size row
+function renderSizes(v) {
+  const row = document.getElementById('size-row');
+  row.innerHTML = '';
+  const sizes = [16, 29, 40, 60, 76, 120, 180];
+  sizes.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.className = 'size-item';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('width', s);
+    svg.setAttribute('height', s);
+    svg.style.borderRadius = Math.round(s * 0.2235) + 'px';
+    svg.style.display = 'block';
+    svg.innerHTML = buildSVG(v).replace(/<svg[^>]*>/, '').replace('</svg>', '');
+    const lbl = document.createElement('div');
+    lbl.className = 'size-label';
+    lbl.textContent = s + 'px';
+    wrap.appendChild(svg);
+    wrap.appendChild(lbl);
+    row.appendChild(wrap);
+  });
+}
+
+function renderContext(v) {
+  ['ctx-logo-1','ctx-logo-2','ctx-logo-3','ctx-logo-4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = buildSVG(v).replace(/<svg[^>]*>/, '').replace('</svg>', '');
+  });
+}
+
+// Initial render with first variant
+renderSizes(VARIANTS[0]);
+renderContext(VARIANTS[0]);
+</script>
+</body>
+</html>

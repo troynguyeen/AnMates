@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Process \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview.html\")",
+      "Bash(start \"\" \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview2.html\")"
+    ]
+  }
+}

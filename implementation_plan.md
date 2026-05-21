@@ -27,6 +27,72 @@
 
 ## 3. Core Features
 
+### 3.0 🔐 Module: AUTHENTICATION & ONBOARDING
+
+#### 3.0.1 Đăng nhập & Xác thực danh tính
+
+- **Social Login:** Google, Apple ID, Facebook — không cần nhớ mật khẩu
+- **Phone OTP:** Xác thực số điện thoại VN (Viettel, Mobifone, Vinaphone)
+- **Face Verification khi đăng ký (bắt buộc):**
+  - Selfie real-time → AI face liveness detection (chống ảnh giả)
+  - Face embedding lưu server-side (không lưu ảnh thô)
+  - Hiển thị badge **"Verified Face" ✅** trên profile
+  - Tái xác thực nếu phát hiện profile ảnh không khớp selfie
+
+> [!CAUTION]
+> Face verification là rào cản quan trọng nhất chống fake account và catfish. Phải hoàn thành trước khi dùng Match mode.
+
+#### 3.0.2 Onboarding Flow (7 bước, bỏ qua được một số bước)
+
+```
+[Bước 1] Tên & Ảnh đại diện
+    ↓
+[Bước 2] Ngày sinh → App tự tính cung hoàng đạo & mệnh
+    ↓
+[Bước 3] Giới tính & Tìm kiếm
+    ↓
+[Bước 4] Tính cách
+    ↓
+[Bước 5] Sở thích (Interest Tags)
+    ↓
+[Bước 6] Face Verification
+    ↓
+[Bước 7] Bật thông báo & Cho phép vị trí
+```
+
+**Bước 2 — Ngày sinh → Cung hoàng đạo & Mệnh:**
+
+| Input | Output tự động |
+|-------|----------------|
+| Ngày/tháng sinh | **Cung hoàng đạo** (Bạch Dương ♈, Kim Ngưu ♉, Song Tử ♊, ...) |
+| Năm sinh (Âm lịch) | **Mệnh** theo Ngũ Hành: Kim 🥇 / Mộc 🌿 / Thủy 💧 / Hỏa 🔥 / Thổ 🪨 |
+| Năm sinh (Can Chi) | **Con giáp** (Tý, Sửu, Dần, Mão, ...) |
+
+- Hiển thị đẹp trên profile: "♏ Thiên Yết · Mệnh Thủy · Tuổi Mão"
+- Dùng trong Matching Algorithm: **+bonus điểm** nếu cung hợp mệnh hợp (optional preference)
+- User có thể ẩn thông tin này nếu không muốn hiển thị public
+
+**Bước 3 — Giới tính & Xu hướng tìm kiếm:**
+
+- **Giới tính:** Nam / Nữ / Non-binary / Khác / Không muốn nói
+- **Tìm kiếm:** Nam / Nữ / Tất cả
+- **Hiển thị trên profile:** tuỳ chọn (show/hide)
+
+**Bước 4 — Kiểu tính cách:**
+
+| Loại | Mô tả ngắn | Icon |
+|------|-----------|------|
+| **Introvert** | Thích không gian yên tĩnh, nhóm nhỏ, chill cafe | 🌙 |
+| **Extrovert** | Thích đám đông, party, gặp gỡ nhiều người | ⚡ |
+| **Ambivert** | Tuỳ mood — vừa chill vừa party được | 🌗 |
+
+- Hiển thị badge nhỏ trên profile card khi matching
+- Dùng trong Matching Algorithm: ưu tiên match introvert với ambivert/introvert cho Date Mode, extrovert với extrovert cho Group Hangout
+
+**Bước 5 — Interest Tags:** (tối đa 10, đã có ở 3.2.1 — sync từ đây)
+
+---
+
 ### 3.1 🗺️ Module: DISCOVER (Khám phá địa điểm)
 
 #### 3.1.1 Smart Suggestion Engine
@@ -93,8 +159,13 @@
 ### 3.2 💫 Module: MATCH & MEET (Kết nối & Hẹn hò)
 
 #### 3.2.1 Profile Setup
-- **Basic Info:** Tên, tuổi, giới tính, nghề nghiệp, bio ngắn
+- **Basic Info:** Tên, nghề nghiệp, bio ngắn (max 150 ký tự)
 - **Ảnh:** 3-6 ảnh (khuyến khích ảnh đời thường, có verification badge)
+- **Giới tính:** Nam / Nữ / Non-binary / Khác / Không muốn nói *(set trong Onboarding, edit được)*
+- **Ngày sinh & Astrology:** *(auto-generate từ Onboarding)*
+  - Cung hoàng đạo, Con giáp, Mệnh Ngũ Hành
+  - Badge nhỏ hiển thị trên card: "♏ · 🌿 Mộc · 🐉 Thìn"
+- **Kiểu tính cách:** Introvert 🌙 / Extrovert ⚡ / Ambivert 🌗
 - **Vibe Tags:** Chọn tối đa 10 tags sở thích
   - 🍕 Foodie | 🎬 Movie Buff | 🎵 Music Lover | 🏃 Sporty
   - 📚 Bookworm | 🎮 Gamer | ☕ Coffee Addict | 🌏 Traveler
@@ -109,6 +180,8 @@
   - Availability trùng khớp
   - Intention phù hợp
   - Lịch sử địa điểm đã like (thích cùng quán = bonus)
+  - Kiểu tính cách tương hợp (introvert ↔ ambivert = +score cho Date Mode)
+  - Cung hoàng đạo & mệnh hợp *(optional, user bật/tắt)*
 
 - **Matching Modes:**
 
@@ -120,13 +193,125 @@
   | 💕 **Date Mode** | Matching 1:1 kiểu hẹn hò, profile detail hơn | Romantic interest |
 
 #### 3.2.3 Chat & Plan
-- **Chat** sau khi match (text + voice message + GIF/sticker)
+- **Messaging đầy đủ:**
+  - 💬 **Text** — tin nhắn thường, hỗ trợ emoji, markdown nhẹ
+  - 🎤 **Voice message** — giữ nút thu âm, phát lại trong chat
+  - 📞 **Audio call** — gọi thoại 1:1 trong app (không cần SĐT, qua WebRTC/TURN server)
+  - 🐱 **Cute Sticker packs** — bộ sticker độc quyền AnMates (chibi food, couple, mood stickers), mở khóa thêm qua AnPoints
+  - 🚫 **Block** — block tức thì từ trong chat, không cần vào profile
 - **Quick Plan:** Gợi ý địa điểm ngay trong chat
   - "Hai bạn đều thích ăn Nhật! Thử quán Sushi Hokkaido gần đây nhé? 🍣"
 - **Shared Calendar:** Chọn ngày giờ hẹn
 - **Split Bill Calculator:** Chia bill sau buổi đi chơi
 
-#### 3.2.4 Safety Features (CỰC KỲ QUAN TRỌNG)
+#### 3.2.4 Commitment Deposit — Đặt cọc chống No-show
+
+> [!IMPORTANT]
+> Tính năng này giải quyết vấn đề cốt lõi của app hẹn hò: **người không đến mà không báo trước** — gây lãng phí thời gian và cảm giác tồi tệ cho cả hai. Đặt cọc tượng trưng tạo cam kết tâm lý + tài chính mà không gây áp lực quá lớn.
+
+##### Cơ chế hoạt động
+
+**Bước 1 — Khởi tạo (sau khi đặt lịch hẹn):**
+- Sau khi 2 người đã chọn địa điểm + giờ hẹn, app hiện banner:
+  > "Đặt cọc 20K để cam kết hẹn này — nếu ai không đến, người kia nhận 30K 🤝"
+- Cả hai chấp nhận → mỗi người thanh toán **20.000₫** qua ví điện tử tích hợp (MoMo / ZaloPay / VNPay)
+- App tạo **Quỹ chung** trong màn hình chat, hiển thị:
+  - Số dư: 40.000₫
+  - Trạng thái: "🔒 Đang giữ đến [ngày hẹn]"
+
+**Bước 2 — Ngày hẹn:**
+- App gửi reminder 2 tiếng trước giờ hẹn
+- Sau giờ hẹn 30 phút, app gửi prompt đến **cả 2 người**:
+  > "Buổi hẹn diễn ra thế nào? 👇"
+  > [✅ Chúng mình đã gặp nhau!] [❌ Mate không đến]
+
+**Bước 3 — Phân giải kết quả:**
+
+| Kịch bản | Kết quả tài chính |
+|----------|-------------------|
+| Cả hai xác nhận "Đã gặp" | Hoàn tiền đầy đủ: mỗi người nhận lại **20k** · App thu **0₫** |
+| A không đến, B xác nhận | B nhận **20k** (hoàn) + **10k** (bù đắp từ tiền cọc của A) = **30k** · App giữ **10k** |
+| B không đến, A xác nhận | A nhận **30k** · App giữ **10k** |
+| Cả hai báo "không đến" | Hoàn tiền đầy đủ cho cả hai, hủy hẹn |
+| Tranh chấp (mỗi người khai khác nhau) | Vào quy trình Dispute Resolution (xem bên dưới) |
+
+**Phân tích tài chính:**
+```
+Tổng quỹ = 20k × 2 = 40k
+
+Nếu cả hai đến:   A ← 20k, B ← 20k, App = 0₫
+Nếu A no-show:    B ← 30k, App ← 10k, A = mất 20k
+Nếu B no-show:    A ← 30k, App ← 10k, B = mất 20k
+```
+
+##### Cơ chế phát hiện no-show
+
+1. **Self-report (chính):** Cả 2 bên tự xác nhận trong app sau giờ hẹn
+2. **GPS soft-check (phụ trợ):** App kiểm tra xem user có ở gần địa điểm hẹn trong vòng ±1km trong khung giờ ±1h — chỉ dùng để gợi ý xác nhận, không tự động phán quyết
+3. **Timeout rule:** Nếu một bên không phản hồi sau 3 tiếng → coi như "đồng ý với khai báo của phía kia"
+
+##### Dispute Resolution — Khi kết quả trái chiều
+
+```
+[A khai: "B không đến"] ↔ [B khai: "A không đến"]
+           │
+           ▼
+    [Dispute opened — 48h]
+           │
+    ┌──────┴──────┐
+ A nộp bằng chứng   B nộp bằng chứng
+ (ảnh check-in,     (ảnh check-in,
+  screenshot chat,   screenshot chat,
+  GPS timestamp)     GPS timestamp)
+           │
+           ▼
+    [AI review bằng chứng]
+           │
+      ┌────┴────┐
+   Rõ ràng   Không rõ
+      │            │
+  Phán quyết   Hoàn tiền cả 2
+  tự động      + ghi nhận tranh chấp
+```
+
+- Tranh chấp ảnh hưởng **Trust Score** của người thua kiện
+- Lạm dụng dispute (> 3 lần sai) → bị khoá tính năng đặt cọc 30 ngày
+
+##### UX & Flow trong app
+
+```
+CHAT HEADER (sau khi đặt lịch):
+┌─────────────────────────────────────┐
+│  🍜 Sushi Hokkaido · T7 7:00pm      │
+│  📍 123 Nguyễn Huệ, Q1             │
+│                                     │
+│  💰 Quỹ chung: 40.000₫  🔒 Đang giữ│
+│  [Xem chi tiết] [Rút tiền về]      │
+└─────────────────────────────────────┘
+```
+
+```
+PROMPT SAU HẸN (30 phút sau giờ hẹn):
+┌─────────────────────────────────────┐
+│  ✨ Buổi hẹn diễn ra thế nào?       │
+│                                     │
+│  [✅ Chúng mình đã gặp nhau!]       │
+│  [❌ Mate không đến]                │
+└─────────────────────────────────────┘
+```
+
+##### Quy định & Giới hạn
+
+- **Đặt cọc là tự nguyện** — không bắt buộc để đặt lịch hẹn
+- Mức cọc cố định: **20.000₫/người** (MVP) — tương lai có thể mở rộng các mức 50k/100k (Premium)
+- **Rút tiền về** từ Quỹ chung bất kỳ lúc nào trước ngày hẹn (nếu cả 2 đồng ý hủy)
+- Ví điện tử trong app: tích hợp **MoMo SDK** (VN phổ biến nhất) + **ZaloPay** + **VNPay**
+- Tuân thủ **Nghị định 52/2024/NĐ-CP** về thanh toán không dùng tiền mặt của VN
+
+> [!NOTE]
+> Tính năng này không phải ví tiền điện tử — chỉ là **escrow tạm thời** (giữ tiền bên thứ 3). Không cần giấy phép ngân hàng, nhưng cần đăng ký **trung gian thanh toán** với NHNN VN hoặc hợp tác với MoMo/ZaloPay để họ xử lý escrow.
+
+#### 3.2.5 Safety Features (CỰC KỲ QUAN TRỌNG)
 
 > [!CAUTION]
 > An toàn người dùng là ưu tiên số 1 cho tính năng matching với người lạ
@@ -164,14 +349,83 @@
 > Mục tiêu: Tạo một hệ sinh thái khép kín khiến user KHÔNG CẦN rời app sang Zalo, Messenger, Google Maps, hay bất kỳ app nào khác.
 
 #### 3.4.1 AnMates Chat — Thay thế Zalo/Messenger
-- **Full messaging:** Text, voice message, video call HD, GIF, stickers, reactions
+- **Full messaging:** Text, voice message, audio call, video call HD, GIF, reactions
+- **Cute Sticker System:**
+  - Bộ sticker mặc định: AnMates Chibi Food Pack 🍜🧋🍕, Mood Pack 😴⚡🔥, Couple Pack 💕
+  - Mở khóa thêm sticker pack bằng AnPoints → incentive tham gia
+  - User có thể tạo sticker từ ảnh của mình (Premium)
+- **Audio Call (1:1 & Group):**
+  - WebRTC peer-to-peer, fallback TURN server khi NAT phức tạp
+  - Hiển thị waveform animated khi đang nói
+  - Mute, speaker toggle, end call
 - **Group chat** cho nhóm đi chơi (tự tạo từ Group Hangout)
-- **Smart Suggestions:** Bot tự gợi ý địa điểm dựa trên nội dung chat (Hỏi người biết về AI)
+- **Smart Suggestions:** Bot tự gợi ý địa điểm dựa trên nội dung chat
   - "Hai bạn nhắc đến sushi → Gợi ý: Sushi Hokkaido ⭐ 4.8, cách 0.8km"
 - **Shared Picture:** Chia sẻ ảnh check-in
 - **Mini-games trong chat:** Truth or Dare, 20 Questions, This or That, Would You Rather — phá băng dễ dàng
 - **Chat Streaks:** Duy trì streak nhắn tin hàng ngày → bonus AnPoints (giống Snapchat)
-- **Read receipts + Online status** → Tạo cảm giác presence, FOMO
+- **Read receipts + Status** → Tạo cảm giác presence, FOMO (xem 3.5)
+
+---
+
+### 3.5 📍 Module: LIVE STATUS & ROUTING
+
+#### 3.5.1 User Status — "Đang làm gì?"
+
+Tính năng presence thể hiện trạng thái thực tế của user — tạo context tự nhiên để bắt chuyện và match đúng moment.
+
+**Preset Status (1 chạm):**
+
+| Status | Icon | Gợi ý hành động |
+|--------|------|-----------------|
+| 🟢 Đang rảnh | 🟢 | App push gợi ý match & địa điểm |
+| 💼 Đang làm việc | 💼 | Ẩn khỏi random match |
+| 📚 Đang đi học | 📚 | Ẩn khỏi random match |
+| 🚗 Đang trên đường đến... | 🚗 | Hiện cho match đã hẹn, ETA real-time |
+| 🍽️ Đang ăn | 🍽️ | Trigger: "Bạn đang ăn ở đâu? Check-in ngay!" |
+| 😴 Không làm phiền | 😴 | Tắt toàn bộ notification chat |
+| ✨ Hãy rủ mình đi! | ✨ | Highlight profile trong discovery feed |
+
+**Custom Status:**
+- User nhập text tự do (max 60 ký tự) + chọn emoji
+- Ví dụ: "☕ Đang ngồi cafe Quận 3, ai đến không?" → gợi ý location pin đính kèm
+- Tự động hết hạn sau: 1h / 4h / hôm nay / tùy chọn
+
+**Status trong chat:**
+- Hiển thị status ngay dưới tên trong header chat
+- "🚗 Đang trên đường đến · ETA 12 phút" — real-time nếu bật Share Location
+
+#### 3.5.2 Smart Distance Routing — Từ A đến B đến C
+
+Tính năng giúp nhóm bạn ở nhiều điểm khác nhau tìm **điểm hẹn tối ưu** hoặc **lập lộ trình nhiều điểm**.
+
+**Use case 1 — Tìm điểm hẹn giữa chừng:**
+```
+Bạn A ở Quận 1 + Bạn B ở Quận 7
+→ App gợi ý địa điểm ăn/chơi ở khu vực Quận 4 / Bình Chánh
+  với tổng thời gian di chuyển của cả 2 là nhỏ nhất
+```
+
+**Use case 2 — Lộ trình đa điểm (A → B → C):**
+```
+6:30pm  Ramen Quận 3    (A) — ăn tối
+8:00pm  Cafe Rooftop Q1 (B) — cà phê / check-in
+9:30pm  Bar Thảo Điền   (C) — kết thúc đêm
+```
+- Hiển thị: khoảng cách A→B, B→C, tổng km, tổng thời gian di chuyển (Grab/xe máy/đi bộ)
+- Tích hợp với **AI Trip Planner** (3.1.5) — output lịch trình đã bao gồm routing
+- Nút "Mở Grab" / "Mở Maps" cho từng chặng
+
+**Use case 3 — Match routing (tính khoảng cách đến match):**
+- Trong profile card khi matching: "Cách bạn 2.4 km · ~8 phút Grab"
+- Khi hẹn gặp: cả 2 thấy khoảng cách real-time, ETA của nhau
+
+**Tech:**
+- Google Maps Distance Matrix API (tính thời gian thực tế theo traffic)
+- Midpoint algorithm: tối ưu điểm hẹn dựa trên weighted travel time
+- Cache kết quả 5 phút để giảm chi phí API
+
+---
 
 #### 3.4.2 In-App Services — MVP Scope
 
@@ -400,6 +654,8 @@ flowchart TD
 | **Search** | Elasticsearch / Meilisearch | Full-text search cho địa điểm |
 | **File Storage** | AWS S3 / Cloudflare R2 | Ảnh user, ảnh địa điểm |
 | **Auth** | Firebase Auth + JWT | Social login (Google, Facebook, Apple) |
+| **Payment / Escrow** | MoMo Business API + ZaloPay SDK | Đặt cọc & hoàn tiền tự động (escrow flow) |
+| **Real-time Calls** | WebRTC + TURN server (Coturn) | Audio call trong chat |
 
 ### 5.3 AI/ML
 
@@ -580,10 +836,20 @@ erDiagram
 
 ### 7.2 Revenue Streams khác
 - **Promoted Places:** Nhà hàng/quán trả tiền để xuất hiện cao hơn
-- **In-app Purchases:** Boost profile, Super Likes, Virtual Gifts
+- **In-app Purchases:** Boost profile, Super Likes, Virtual Gifts, Sticker packs
 - **Commission:** Hoa hồng khi user đặt bàn/mua vé qua app (affiliate)
 - **Brand Partnerships:** Sponsored collections, exclusive deals
 - **Events:** Tổ chức sự kiện offline (Speed Dating, Food Crawl) → bán vé
+- **Commitment Deposit (No-show Fee):** App giữ **10.000₫** mỗi khi xảy ra no-show (từ quỹ 20k cọc của người vi phạm)
+
+  | Chỉ số ước tính | Giá trị |
+  |----------------|---------|
+  | 10,000 hẹn/tháng có đặt cọc | 10,000 × 40k = 400M₫ lưu chuyển qua app |
+  | Tỉ lệ no-show thực tế ~15% | 1,500 sự kiện no-show/tháng |
+  | Doanh thu no-show fee | 1,500 × 10k = **15,000,000₫/tháng** |
+  | Adoption rate cọc ~30% | Đây là con số conservative |
+
+  > Ngoài doanh thu, tính năng này là **trust signal mạnh** — tăng match quality và brand differentiation so với Tinder/Bumble.
 
 ---
 
@@ -594,14 +860,19 @@ erDiagram
 > [!IMPORTANT]
 > Focus: Validate core value proposition — "Khám phá địa điểm dễ dàng"
 
-- ✅ User authentication (Social login)
+- ✅ User authentication (Social login + Phone OTP)
+- ✅ Face Verification khi đăng ký (liveness detection)
+- ✅ Onboarding flow: tên, ngày sinh, giới tính, tính cách, sở thích
+- ✅ Auto-generate cung hoàng đạo, mệnh, con giáp từ ngày sinh
 - ✅ Place discovery (mood-based, filters, swipe)
 - ✅ Place detail page + reviews
 - ✅ Wishlist / Saved places
-- ✅ Basic user profiles
+- ✅ Basic user profiles (với personality badge + astrology)
 - ✅ Basic 1:1 matching (Random Vibe mode only)
-- ✅ In-app chat (text only)
-- ✅ Safety: Report, Block, Photo verification
+- ✅ In-app chat (text + voice message + audio call + sticker)
+- ✅ User Status (preset + custom)
+- ✅ Safety: Report, Block (trong chat), Photo verification
+- ✅ Distance routing đơn giản (khoảng cách tới match)
 - 📍 Launch: TP.HCM only, ~500-1000 curated places
 
 ### Phase 2: Social & Growth (2-3 tháng) 📈
@@ -610,16 +881,20 @@ erDiagram
 - Social feed + Vibe Stories
 - AnPoints & Gamification
 - Curated Collections
+- **Commitment Deposit** (tích hợp MoMo/ZaloPay escrow, dispute flow, GPS soft-check)
 - Push notification optimization
 - 📍 Expand: Hà Nội + thêm ~2000 places
 
 ### Phase 3: AI & Premium (2-3 tháng) 🤖
 
-- AI Trip Planner (NLP-based)
+- AI Trip Planner (NLP-based) + A-B-C multi-stop routing
 - Advanced recommendation engine (ML)
 - Premium subscription (AnMates+)
-- Date Mode with detailed compatibility
-- Voice messages in chat
+- Date Mode với astrology compatibility score
+- Video call HD trong chat
+- Cute Sticker packs mở rộng (mở khóa bằng AnPoints)
+- Live Status ETA real-time khi bật Share Location
+- Midpoint routing (tìm điểm hẹn giữa chừng cho nhiều người)
 - Share live location
 - 📍 Thêm Đà Nẵng, Đà Lạt, Nha Trang
 
@@ -696,6 +971,9 @@ quadrantChart
 | Chất lượng data địa điểm | 🟡 Cao | Trung bình | Partner với Foody/Google, crowdsource, editorial team |
 | User retention thấp | 🟡 Cao | Trung bình | Gamification, push notifications, quality matching |
 | Cạnh tranh từ big players | 🟡 Trung bình | Thấp | Focus niche VN, local-first approach |
+| **Lạm dụng Commitment Deposit** (báo sai no-show để lấy tiền) | 🔴 Cao | Trung bình | AI dispute review, Trust Score deduction, block feature sau 3 lần sai, GPS evidence |
+| **Pháp lý thanh toán** (cần đăng ký trung gian thanh toán NHNN) | 🔴 Cao | Cao | Hợp tác escrow với MoMo/ZaloPay (họ có giấy phép), không tự xử lý dòng tiền |
+| **User từ chối đặt cọc** (friction khi onboarding hẹn gặp) | 🟡 Trung bình | Cao | Tính năng hoàn toàn tự nguyện, UX rõ ràng về lợi ích, ra mắt dần dần |
 
 ---
 
