@@ -1,0 +1,111 @@
+# ===========================
+# Xcode
+# ===========================
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ===========================
+# Swift Package Manager
+# ===========================
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ===========================
+# CocoaPods
+# ===========================
+Pods/
+Podfile.lock
+
+# ===========================
+# Carthage
+# ===========================
+Carthage/Build/
+Carthage/Checkouts/
+
+# ===========================
+# fastlane
+# ===========================
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# ===========================
+# Node / npm (nếu dùng tooling)
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# ===========================
+# Windows (tránh commit nhầm)
+# ===========================
+*.dll
+*.exe
+*.pdb
+*.lib
+*.obj
+Thumbs.db
+Desktop.ini
+
+# ===========================
+# macOS
+# ===========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ===========================
+# IDE / Editor
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.mobileprovision
+AuthKey_*.p8
+GoogleService-Info.plist
+
+# ===========================
+# Build Artifacts
+# ===========================
+*.o
+*.a
+*.framework
+*.app
+*.xcarchive

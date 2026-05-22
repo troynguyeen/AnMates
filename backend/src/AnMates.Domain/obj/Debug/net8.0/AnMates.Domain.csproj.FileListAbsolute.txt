@@ -1,0 +1,13 @@
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/bin/Debug/net8.0/AnMates.Domain.deps.json
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/bin/Debug/net8.0/AnMates.Domain.dll
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/bin/Debug/net8.0/AnMates.Domain.pdb
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.csproj.AssemblyReference.cache
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.AssemblyInfoInputs.cache
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.AssemblyInfo.cs
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.csproj.CoreCompileInputs.cache
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.sourcelink.json
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.dll
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/refint/AnMates.Domain.dll
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/AnMates.Domain.pdb
+/Users/thanhit/Downloads/AnMates/AnMatesApp/backend/src/AnMates.Domain/obj/Debug/net8.0/ref/AnMates.Domain.dll

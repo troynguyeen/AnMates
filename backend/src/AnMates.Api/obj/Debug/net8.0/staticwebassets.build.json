@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "0XKWvFa+FUCQWCgMBmICxLPmeUV3kqPNZPt/Tu/5+KA=",
+  "Source": "AnMates.Api",
+  "BasePath": "_content/AnMates.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

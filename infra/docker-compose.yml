@@ -1,0 +1,238 @@
+# AnMates production-grade single-host stack.
+# Usage:
+#   cp .env.example .env && edit .env
+#   docker compose --env-file .env up -d
+#
+# Hardening notes:
+#  - Only Caddy exposes ports to the host. Everything else is reachable only
+#    via the internal `anmates-net` bridge.
+#  - Postgres / Redis / MinIO data live on named volumes; back these up.
+#  - Resource limits assume an 8 vCPU / 16 GB host. Tune per node.
+
+name: anmates
+
+networks:
+  anmates-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  postgres-backups:
+  redis-data:
+  minio-data:
+  caddy-data:
+  caddy-config:
+  loki-data:
+
+services:
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Edge: Caddy handles TLS, HTTP/2/3, and forwards real client IPs.
+  # ────────────────────────────────────────────────────────────────────────
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      API_UPSTREAM: api:8080
+      MINIO_CONSOLE_UPSTREAM: minio:9001
+    networks: [anmates-net]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Application: ASP.NET Core API (modular monolith).
+  # ────────────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "false"
+      ConnectionStrings__Postgres: >
+        Host=postgres;Port=5432;Database=${POSTGRES_DB};
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Pooling=true;MinPoolSize=2;MaxPoolSize=50;Timeout=15
+      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000
+      Storage__Endpoint: http://minio:9000
+      Storage__AccessKey: ${MINIO_ROOT_USER}
+      Storage__SecretKey: ${MINIO_ROOT_PASSWORD}
+      Storage__Bucket: anmates
+      Jwt__Issuer: https://${DOMAIN}
+      Jwt__Audience: anmates-mobile
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      RateLimit__Capacity: "5"
+      RateLimit__RefillRatePerSecond: "0.5"
+      Serilog__WriteTo__1__Args__uri: http://loki:3100/loki/api/v1/push
+    networks: [anmates-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "3.0"
+          memory: 2g
+        reservations:
+          cpus: "0.5"
+          memory: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # ────────────────────────────────────────────────────────────────────────
+  # PostgreSQL 16 + PostGIS 3.4.  Single-node MVP; replica added in Phase 2.
+  # ────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    restart: unless-stopped
+    shm_size: 512mb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--data-checksums --auth-host=scram-sha-256"
+    command: >
+      postgres
+        -c shared_buffers=512MB
+        -c effective_cache_size=2GB
+        -c maintenance_work_mem=128MB
+        -c work_mem=16MB
+        -c max_connections=100
+        -c random_page_cost=1.1
+        -c wal_level=replica
+        -c max_wal_senders=3
+        -c wal_keep_size=512MB
+        -c checkpoint_completion_target=0.9
+        -c log_min_duration_statement=500
+        -c log_checkpoints=on
+        -c log_connections=off
+        -c log_disconnections=off
+        -c log_lock_waits=on
+        -c statement_timeout=30000
+        -c idle_in_transaction_session_timeout=60000
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    networks: [anmates-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 3g
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Redis: cache, rate-limiter state, SignalR backplane.
+  # ────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks: [anmates-net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+  # ────────────────────────────────────────────────────────────────────────
+  # MinIO: S3-compatible object storage for avatars, check-in photos, chat media.
+  # ────────────────────────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: https://files.${DOMAIN}
+    volumes:
+      - minio-data:/data
+    networks: [anmates-net]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Backups: pg_dump nightly to a local volume.  Mirror off-host with restic.
+  # ────────────────────────────────────────────────────────────────────────
+  pg-backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    volumes:
+      - postgres-backups:/backups
+      - ./backup/pgdump.sh:/usr/local/bin/pgdump.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    # Nightly dump at 02:15 server time.  Keeps last 14 days.
+    command: >
+      "apk add --no-cache dcron tzdata &&
+       echo '15 2 * * * /usr/local/bin/pgdump.sh' | crontab - &&
+       crond -f -d 8"
+    networks: [anmates-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Observability: Loki (logs) + Prometheus (metrics) + Grafana (UI).
+  # ────────────────────────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.1.0
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    networks: [anmates-net]
