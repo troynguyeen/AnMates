@@ -1,0 +1,87 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type User struct {
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"-"`
+	Name         string    `json:"name"`
+	AvatarURL    *string   `json:"avatar_url,omitempty"`
+	Bio          *string   `json:"bio,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type Wishlist struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	FoodName     string    `json:"food_name"`
+	FoodCategory string    `json:"food_category"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type Match struct {
+	ID        uuid.UUID `json:"id"`
+	UserAID   uuid.UUID `json:"user_a_id"`
+	UserBID   uuid.UUID `json:"user_b_id"`
+	Status    string    `json:"status"`
+	Score     float64   `json:"score"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Message struct {
+	ID        uuid.UUID `json:"id"`
+	MatchID   uuid.UUID `json:"match_id"`
+	SenderID  uuid.UUID `json:"sender_id"`
+	Content   string    `json:"content"`
+	MsgType   string    `json:"msg_type"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type NoiLauProgress struct {
+	MatchID       uuid.UUID  `json:"match_id"`
+	Points        int        `json:"points"`
+	Level         int        `json:"level"`
+	NextThreshold *int       `json:"next_threshold"`
+	Locked        bool       `json:"locked"`
+	LastActivity  *time.Time `json:"last_activity"`
+}
+
+// MatchCandidate is what GET /api/matches returns — not persisted.
+type MatchCandidate struct {
+	UserID       uuid.UUID `json:"user_id"`
+	Name         string    `json:"name"`
+	AvatarURL    *string   `json:"avatar_url,omitempty"`
+	OverlapCount int       `json:"overlap_count"`
+	OverlapFoods []string  `json:"overlap_foods"`
+	Score        float64   `json:"score"`
+}
+
+// Nồi Lẩu thresholds — index = level - 1 (level 1 starts at 0 points).
+var NoiLauThresholds = []int{0, 10, 30, 60, 100}
+
+// LevelForPoints returns the level (1..5) for a given point total.
+func LevelForPoints(p int) int {
+	level := 1
+	for i, t := range NoiLauThresholds {
+		if p >= t {
+			level = i + 1
+		}
+	}
+	return level
+}
+
+// NextThreshold returns the points needed for the next level, or nil if maxed.
+func NextThreshold(p int) *int {
+	for _, t := range NoiLauThresholds {
+		if t > p {
+			v := t
+			return &v
+		}
+	}
+	return nil
+}
