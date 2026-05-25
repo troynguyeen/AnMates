@@ -81,7 +81,6 @@ class _PhoneInputViewState extends State<PhoneInputView> {
   // ── Web flow: Firebase tự tạo invisible reCAPTCHA → ConfirmationResult ────
   Future<void> _sendOtpWeb(String phone) async {
     try {
-      // Không truyền RecaptchaVerifier — Firebase tự tạo invisible reCAPTCHA
       final confirmationResult =
           await FirebaseAuth.instance.signInWithPhoneNumber(phone);
       if (!mounted) return;
@@ -91,6 +90,10 @@ class _PhoneInputViewState extends State<PhoneInputView> {
       if (!mounted) return;
       setState(() => _loading = false);
       _showError(_friendlyError(e.code));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _showError('Lỗi: ${e.toString().replaceFirst('Exception: ', '')}');
     }
   }
 

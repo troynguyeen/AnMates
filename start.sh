@@ -3,7 +3,7 @@
 # start.sh — AnMates local dev launcher
 # Supports: macOS (OrbStack / Docker Desktop) · Linux · Windows (WSL2 / Git Bash)
 # Usage:  ./start.sh
-# Custom: WEB_PORT=3000 FLUTTER_BIN=/path/to/flutter ./start.sh
+# Custom: FLUTTER_WEB_PORT=3000 API_PORT=9000 ./start.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -15,9 +15,7 @@ error() { echo -e "${RED}[AnMates]${NC} $1"; exit 1; }
 
 # ── Config (override via env vars) ────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-API_DIR="$SCRIPT_DIR/anmates-api"
-FLUTTER_DIR="$SCRIPT_DIR/anmates_flutter"
-WEB_PORT="${WEB_PORT:-54180}"
+WEB_PORT="${FLUTTER_WEB_PORT:-54180}"
 API_PORT="${API_PORT:-8080}"
 
 # ── Detect OS ─────────────────────────────────────────────────────────────────
@@ -35,21 +33,7 @@ echo -e "${CYAN}  AnMates — Local Dev Launcher  [${PLATFORM}]${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# ── 1. Detect Flutter binary ──────────────────────────────────────────────────
-if [[ -n "${FLUTTER_BIN:-}" ]]; then
-  FLUTTER="$FLUTTER_BIN"
-elif command -v flutter &>/dev/null; then
-  FLUTTER="$(command -v flutter)"
-elif [[ -f "/opt/homebrew/bin/flutter" ]]; then
-  FLUTTER="/opt/homebrew/bin/flutter"
-elif [[ -f "$HOME/flutter/bin/flutter" ]]; then
-  FLUTTER="$HOME/flutter/bin/flutter"
-else
-  error "Flutter not found. Set FLUTTER_BIN=/path/to/flutter or add flutter to PATH.\nSee: https://docs.flutter.dev/get-started/install"
-fi
-log "Flutter: $FLUTTER"
-
-# ── 2. Detect LAN IP ──────────────────────────────────────────────────────────
+# ── 1. Detect LAN IP ──────────────────────────────────────────────────────────
 if [[ "$PLATFORM" == "macos" ]]; then
   LAN_IP=$(ipconfig getifaddr en0 2>/dev/null \
          || ipconfig getifaddr en1 2>/dev/null \
@@ -63,27 +47,7 @@ else
 fi
 log "LAN IP: $LAN_IP"
 
-# ── 3. Update hardcoded API URLs in Flutter source ────────────────────────────
-log "Updating Flutter API URLs → http://$LAN_IP:$API_PORT"
-_sed() {
-  if [[ "$PLATFORM" == "macos" ]]; then
-    sed -i '' "$1" "$2"
-  else
-    sed -i "$1" "$2"
-  fi
-}
-for file in \
-    "$FLUTTER_DIR/lib/services/api_client.dart" \
-    "$FLUTTER_DIR/lib/services/auth_service.dart"
-do
-  [[ -f "$file" ]] || continue
-  _sed "s|http://[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}:$API_PORT|http://$LAN_IP:$API_PORT|g" "$file"
-  _sed "s|ws://[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}:$API_PORT|ws://$LAN_IP:$API_PORT|g"   "$file"
-  _sed "s|http://localhost:$API_PORT|http://$LAN_IP:$API_PORT|g" "$file"
-  _sed "s|ws://localhost:$API_PORT|ws://$LAN_IP:$API_PORT|g"     "$file"
-done
-
-# ── 4. Setup Docker host ──────────────────────────────────────────────────────
+# ── 2. Setup Docker host ──────────────────────────────────────────────────────
 if [[ "$PLATFORM" == "macos" ]]; then
   if [[ -S "$HOME/.orbstack/run/docker.sock" ]]; then
     export DOCKER_HOST="unix://$HOME/.orbstack/run/docker.sock"
@@ -95,7 +59,6 @@ if [[ "$PLATFORM" == "macos" ]]; then
     export DOCKER_HOST="unix:///var/run/docker.sock"
     DOCKER_RUNTIME="Docker"
   else
-    # OrbStack not running — try to start it
     warn "OrbStack not running. Starting..."
     open -a OrbStack 2>/dev/null || error "Docker not found.\nmacOS: Install OrbStack → https://orbstack.dev\n  OR: Install Docker Desktop → https://www.docker.com/products/docker-desktop"
     log "Waiting for OrbStack..."
@@ -115,70 +78,62 @@ elif [[ "$PLATFORM" == "linux" ]]; then
     error "Docker not running.\nLinux: sudo systemctl start docker"
   fi
 else
-  # Windows Git Bash / WSL2 — Docker Desktop manages the socket
+  # Windows Git Bash / WSL2
   DOCKER_RUNTIME="Docker Desktop"
 fi
 log "Docker runtime: $DOCKER_RUNTIME ✓"
 
-# ── 5. Verify docker is accessible ───────────────────────────────────────────
+# ── 3. Verify docker is accessible ───────────────────────────────────────────
 docker info &>/dev/null || error "Cannot connect to Docker daemon ($DOCKER_RUNTIME).\nMake sure Docker is running and try again."
 
-# ── 6. Start backend ──────────────────────────────────────────────────────────
-log "Starting Go API + PostgreSQL..."
-cd "$API_DIR"
+# ── 4. Check .env ────────────────────────────────────────────────────────────
+[[ -f "$SCRIPT_DIR/.env" ]] || error ".env not found in AnMatesApp/\nCopy from .env.example: cp .env.example .env\nThen fill in the values."
 
-# Check .env exists
-[[ -f ".env" ]] || error ".env file not found in anmates-api/\nCopy from .env.example: cp .env.example .env\nThen fill in the values."
+# ── 5. Set API_BASE_URL for Flutter Docker build ──────────────────────────────
+# Exporting overrides the .env value when docker-compose passes it as a build arg.
+# The browser resolves this URL — use LAN IP so mobile devices on the same
+# network can reach the API.
+export API_BASE_URL="http://$LAN_IP:$API_PORT"
+log "API_BASE_URL → $API_BASE_URL"
 
-docker compose up -d 2>&1 | grep -E "Started|Running|Created|Healthy|Warning|error" || true
+# ── 6. Build + start all services ────────────────────────────────────────────
+log "Building and starting services (DB · API · Flutter web)..."
+log "First run: Flutter image pull + Dart compile may take a few minutes."
+cd "$SCRIPT_DIR"
+docker compose up --build -d 2>&1 \
+  | grep -E "#[0-9]+|Starting|Started|Running|Created|Healthy|Built|Warning|[Ee]rror" \
+  || true
 
-log "Waiting for backend health check..."
+# ── 7. Wait for API health ────────────────────────────────────────────────────
+log "Waiting for API health check..."
 for i in {1..30}; do
   if curl -sf "http://localhost:$API_PORT/health" &>/dev/null; then
-    log "Backend healthy ✓"
+    log "API healthy ✓"
     break
   fi
   sleep 2
   if [[ $i == 30 ]]; then
-    echo ""
-    warn "Backend not responding. Check logs:"
+    warn "API not responding. Check logs:"
     warn "  docker compose logs api"
     warn "  docker compose logs db"
-    error "Backend not healthy after 60s."
+    error "API not healthy after 60s."
   fi
 done
 
-# ── 7. Build Flutter web ──────────────────────────────────────────────────────
-log "Building Flutter web..."
-cd "$FLUTTER_DIR"
-"$FLUTTER" pub get --no-example 2>&1 | grep -E "Got|Resolving|Changed|error|Error" || true
-"$FLUTTER" build web --release 2>&1 | grep -E "Built|Compiling|error|Error" || true
-log "Flutter web built ✓"
-
-# ── 8. Start web server ───────────────────────────────────────────────────────
-# Kill any process holding the port (SIGKILL, not SIGTERM) then wait until free.
-_free_port() {
-  local port="$1"
-  lsof -ti:"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
-  for i in {1..10}; do
-    lsof -ti:"$port" &>/dev/null || break
-    sleep 1
-  done
-}
-_free_port "$WEB_PORT"
-
-cd "$FLUTTER_DIR/build/web"
-python3 -m http.server "$WEB_PORT" --bind 0.0.0.0 2>&1 | while IFS= read -r line; do
-  echo -e "${GREEN}[WEB flutter]${NC} $line"
-done &
-WEB_PIPE_PID=$!
-# Verify server actually bound the port (not just "started" the process)
-for i in {1..5}; do
-  lsof -ti:"$WEB_PORT" &>/dev/null && break
-  sleep 1
-  [[ $i == 5 ]] && error "Web server failed to bind port $WEB_PORT"
+# ── 8. Wait for Flutter web (nginx) ──────────────────────────────────────────
+log "Waiting for Flutter web (nginx)..."
+for i in {1..60}; do
+  if curl -sf "http://localhost:$WEB_PORT" &>/dev/null; then
+    log "Flutter web ready ✓"
+    break
+  fi
+  sleep 3
+  if [[ $i == 60 ]]; then
+    warn "Flutter web not responding. Check logs:"
+    warn "  docker compose logs flutter_web"
+    error "Flutter web not ready after 180s."
+  fi
 done
-log "Web server started ✓"
 
 # ── 9. Open browser ───────────────────────────────────────────────────────────
 APP_URL="http://localhost:$WEB_PORT"
@@ -202,17 +157,15 @@ echo -e "  Press ${YELLOW}Ctrl+C${NC} to stop"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# ── 10. Stream all logs ───────────────────────────────────────────────────────
+# ── 10. Stream logs ───────────────────────────────────────────────────────────
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "  ${GREEN}[WEB flutter]${NC}  Flutter web  · port $WEB_PORT"
 echo -e "  ${CYAN}[API go-fiber]${NC}  Go backend   · port $API_PORT"
+echo -e "  ${GREEN}[WEB nginx]${NC}     Flutter web  · port $WEB_PORT"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# Starts docker log stream in background; updates LOG_PID.
-# Arg: number of tail lines (0 = only new lines after rebuild)
 _start_log_stream() {
-  cd "$API_DIR"
+  cd "$SCRIPT_DIR"
   docker compose logs -f --tail="${1:-20}" api 2>&1 | while IFS= read -r line; do
     clean="${line#*| }"
     echo -e "${CYAN}[API go-fiber]${NC} $clean"
@@ -220,84 +173,67 @@ _start_log_stream() {
   LOG_PID=$!
 }
 
-# Kills web server + log stream silently.
 _stop_services() {
-  # Kill tracked PIDs first
-  kill "$WEB_PIPE_PID" "$LOG_PID" 2>/dev/null || true
-  # Kill all remaining children of this script (python3, docker compose logs, etc.)
-  # "docker compose logs -f" holds the pipe open and won't get SIGPIPE while idle,
-  # so we must kill it explicitly rather than relying on wait.
+  kill "$LOG_PID" 2>/dev/null || true
   pkill -P $$ 2>/dev/null || true
-  # Fixed pause instead of blocking wait — prevents hang when signals are blocked.
   sleep 0.3
 }
 
+LOG_PID=""
 _ACTION=""
 
-# Ctrl+C handler: stop output, show menu, set _ACTION, return.
 _cleanup() {
-  trap '' INT TERM   # block re-entry while menu is shown
+  trap '' INT TERM
   echo ""
   _stop_services
 
   echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo -e "${YELLOW}  AnMates — bạn muốn làm gì?${NC}"
   echo ""
-  echo -e "  ${GREEN}[1]${NC} Stop & Exit  — dừng và thoát containers, giải phóng RAM/CPU"
+  echo -e "  ${GREEN}[1]${NC} Stop & Exit  — dừng containers, giải phóng RAM/CPU"
   echo -e "       ${GREEN}→${NC} chạy lại ./start.sh để tiếp tục"
-  echo -e "  ${CYAN}[2]${NC} Rebuild     — build lại code mới + restart API"
+  echo -e "  ${CYAN}[2]${NC} Rebuild     — build lại code mới + restart tất cả services"
   echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   printf "  Chọn [1/2]: "
   read -r _ACTION </dev/tty
 
-  trap _cleanup INT TERM   # re-enable for next Ctrl+C
+  trap _cleanup INT TERM
 }
 
 trap _cleanup INT TERM
 _start_log_stream 20
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
-# Loops only when rebuild is requested (option 2), exits on 1 or 3.
 while true; do
-  wait "$WEB_PIPE_PID" || true
+  wait "$LOG_PID" || true
 
   case "${_ACTION}" in
     2)
       _ACTION=""
       echo ""
-      log "Rebuild Go API Docker image..."
-      cd "$API_DIR"
-      docker compose build api 2>&1 | grep -E "#[0-9]+|Built|Error|error" || true
+      log "Rebuilding all services..."
+      cd "$SCRIPT_DIR"
+      docker compose up --build -d 2>&1 \
+        | grep -E "#[0-9]+|Starting|Started|Running|Created|Healthy|Built|Warning|[Ee]rror" \
+        || true
 
-      log "Restarting API container..."
-      docker compose up -d api 2>&1 | grep -E "Started|Running|Created|Healthy|Warning|error" || true
-
-      log "Waiting for backend health check..."
+      log "Waiting for API health check..."
       for i in {1..30}; do
         if curl -sf "http://localhost:$API_PORT/health" &>/dev/null; then
-          log "Backend healthy ✓"; break
+          log "API healthy ✓"; break
         fi
         sleep 2
-        [[ $i == 30 ]] && warn "Backend not responding after rebuild."
+        [[ $i == 30 ]] && warn "API not responding after rebuild."
       done
 
-      log "Restarting web server..."
-      _free_port "$WEB_PORT"
-      cd "$FLUTTER_DIR/build/web"
-      python3 -m http.server "$WEB_PORT" --bind 0.0.0.0 2>&1 | while IFS= read -r line; do
-        echo -e "${GREEN}[WEB flutter]${NC} $line"
-      done &
-      WEB_PIPE_PID=$!
-
-      _start_log_stream 0   # tail=0 → only new logs after rebuild
+      _start_log_stream 0
       log "AnMates running ✓ — Ctrl+C for options"
       ;;
 
     *)
-      # Option 1 (or any key) = stop containers to free resources
       echo ""
       log "Dừng containers — giải phóng RAM/CPU..."
-      cd "$API_DIR"
+      cd "$SCRIPT_DIR"
       docker compose stop 2>&1 | grep -E "Stopped|Warning|error" || true
       log "Containers đã dừng. Chạy lại ./start.sh để tiếp tục."
       exit 0

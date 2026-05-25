@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _baseUrl = 'http://192.168.88.80:8080';
+const _baseUrl =
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8080');
 
 class ApiException implements Exception {
   final int statusCode;
@@ -72,5 +73,5 @@ class ApiClient {
   }
 
   static String wsUrl(String matchId) =>
-      'ws://192.168.88.80:8080/ws/chat/$matchId';
+      'ws://192.168.1.216:8080/ws/chat/$matchId';
 }

@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Backend base URL. Override at build/run time:
-//   flutter run --dart-define=API_BASE_URL=http://localhost:8080
+//   flutter run --dart-define=API_BASE_URL=http://192.168.1.216:8080
 const _baseUrl =
-    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.88.80:8080');
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8080');
 
 /// Public copy for tests + dev-only flows (e.g. dev-login button).
 const apiBaseUrl = _baseUrl;
