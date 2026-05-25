@@ -14,6 +14,8 @@ type Config struct {
 	Port               string
 	Env                string
 	FirebaseWebAPIKey  string
+	DevMode            bool
+	DevBypassSecret    string
 }
 
 func Load() (*Config, error) {
@@ -23,6 +25,8 @@ func Load() (*Config, error) {
 		Port:              getOr("PORT", "8080"),
 		Env:               getOr("ENV", "production"),
 		FirebaseWebAPIKey: os.Getenv("FIREBASE_WEB_API_KEY"),
+		DevMode:           os.Getenv("DEV_MODE") == "true" || os.Getenv("DEV_MODE") == "1",
+		DevBypassSecret:   os.Getenv("DEV_BYPASS_SECRET"),
 	}
 	if c.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")

@@ -1,5 +1,5 @@
-# Single-host stack for AnMates MVP.
-# Total target footprint: ~200 MB (DB + API). Designed for 1 vCPU / 1 GB VPS.
+# API-only quick start. For the full stack (FE + BE + DB) prefer the root
+# docker-compose.yml (npm run dev). Both files read ../.env at repo root.
 
 services:
   api:
@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     ports:
       - "0.0.0.0:8080:8080"
-    env_file: .env
+    env_file: ../.env
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
     depends_on:

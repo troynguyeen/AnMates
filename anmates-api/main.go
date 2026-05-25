@@ -88,6 +88,14 @@ func main() {
 	app.Use(middleware.RequestLogger(log))
 
 	rl := middleware.NewRateLimit(0.5, 5)
+	rateLimitOff := os.Getenv("DISABLE_RATE_LIMIT") == "1" || os.Getenv("DISABLE_RATE_LIMIT") == "true"
+	if rateLimitOff {
+		log.Warn("DISABLE_RATE_LIMIT set — rate limiter is OFF")
+	}
+	rlHandler := func(c *fiber.Ctx) error { return c.Next() }
+	if !rateLimitOff {
+		rlHandler = rl.Handler()
+	}
 
 	authH := handlers.NewAuth(pool, cfg)
 	userH := handlers.NewUser(pool)
@@ -106,7 +114,7 @@ func main() {
 		return models.OK(c, fiber.Map{"status": "ok"})
 	})
 
-	api := app.Group("/api", rl.Handler())
+	api := app.Group("/api", rlHandler)
 
 	// Auth (public).
 	api.Post("/auth/register", authH.Register)
@@ -114,6 +122,10 @@ func main() {
 	api.Post("/auth/phone-verify", authH.PhoneVerify)
 	api.Post("/auth/refresh", authH.Refresh)
 	api.Post("/auth/logout", authH.Logout)
+	if cfg.DevMode {
+		api.Post("/auth/dev-login", authH.DevLogin)
+		log.Warn("DEV_MODE on — /api/auth/dev-login is open (requires DEV_BYPASS_SECRET)")
+	}
 
 	// Authenticated.
 	auth := api.Use(jwtMW)

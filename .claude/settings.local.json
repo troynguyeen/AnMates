@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "PowerShell(Start-Process \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview.html\")",
-      "Bash(start \"\" \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview2.html\")"
+      "Bash(start \"\" \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview2.html\")",
+      "Bash(go build *)",
+      "PowerShell($ErrorActionPreference='Continue'; \\(Get-Command go -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(@\\('C:\\\\Program Files\\\\Go\\\\bin\\\\go.exe','C:\\\\go\\\\bin\\\\go.exe', \"$env:USERPROFILE\\\\go\\\\bin\\\\go.exe\", \"$env:LOCALAPPDATA\\\\Programs\\\\Go\\\\bin\\\\go.exe\"\\) | ForEach-Object { if \\(Test-Path $_\\) { Write-Output $_ } })",
+      "Bash(node c:/AnM/AnMates/scripts/run-flutter.mjs --version)"
     ]
   }
 }

@@ -52,6 +52,12 @@ type phoneVerifyReq struct {
 	Name          string `json:"name"`
 }
 
+type devLoginReq struct {
+	Secret string `json:"secret"`
+	Phone  string `json:"phone"`
+	Name   string `json:"name"`
+}
+
 type tokenResp struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
@@ -154,21 +160,65 @@ func (a *Auth) PhoneVerify(c *fiber.Ctx) error {
 		return models.Err(c, fiber.StatusBadRequest, models.ErrValidation, "firebase token has no phone number")
 	}
 
-	var u models.User
-	// Upsert: insert new phone user or return existing.
-	err = a.pool.QueryRow(ctx, `
-		INSERT INTO users (firebase_uid, phone, name)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (firebase_uid) DO UPDATE
-		  SET phone = EXCLUDED.phone
-		RETURNING id, name, email, phone, avatar_url, bio, created_at
-	`, uid, phone, r.Name).Scan(
-		&u.ID, &u.Name, &u.Email, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	u, err := upsertPhoneUser(ctx, a.pool, uid, phone, r.Name)
 	if err != nil {
-		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "upsert user failed")
+		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "upsert user failed: "+err.Error())
+	}
+	return a.issueTokens(c, ctx, u, fiber.StatusOK)
+}
+
+// upsertPhoneUser handles three cases without tripping any UNIQUE constraint:
+//   1. firebase_uid already in DB → keep phone fresh, return that row.
+//   2. phone already in DB (different/old firebase_uid) → re-bind to the new
+//      firebase_uid. This is the common case when Firebase rotated the session
+//      (different project, signed out, etc.) but the user kept their number.
+//   3. Neither matches → INSERT new row.
+//
+// ON CONFLICT alone can't cover this because Postgres only accepts one conflict
+// target per statement and we have two unique columns (firebase_uid, phone).
+func upsertPhoneUser(ctx context.Context, pool *pgxpool.Pool, uid, phone, name string) (*models.User, error) {
+	var u models.User
+
+	// 1. Try firebase_uid
+	err := pool.QueryRow(ctx, `
+		SELECT id, name, email, phone, avatar_url, bio, created_at
+		FROM users WHERE firebase_uid = $1
+	`, uid).Scan(&u.ID, &u.Name, &u.Email, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	if err == nil {
+		if u.Phone == nil || *u.Phone != phone {
+			_, _ = pool.Exec(ctx, `UPDATE users SET phone = $1 WHERE id = $2`, phone, u.ID)
+			u.Phone = &phone
+		}
+		return &u, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("lookup by firebase_uid: %w", err)
 	}
 
-	return a.issueTokens(c, ctx, &u, fiber.StatusOK)
+	// 2. Try phone (firebase_uid rotated)
+	err = pool.QueryRow(ctx, `
+		SELECT id, name, email, phone, avatar_url, bio, created_at
+		FROM users WHERE phone = $1
+	`, phone).Scan(&u.ID, &u.Name, &u.Email, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	if err == nil {
+		_, _ = pool.Exec(ctx, `UPDATE users SET firebase_uid = $1 WHERE id = $2`, uid, u.ID)
+		return &u, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("lookup by phone: %w", err)
+	}
+
+	// 3. Fresh user
+	err = pool.QueryRow(ctx, `
+		INSERT INTO users (firebase_uid, phone, name)
+		VALUES ($1, $2, $3)
+		RETURNING id, name, email, phone, avatar_url, bio, created_at
+	`, uid, phone, name).Scan(
+		&u.ID, &u.Name, &u.Email, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("insert user: %w", err)
+	}
+	return &u, nil
 }
 
 func (a *Auth) verifyFirebaseToken(ctx context.Context, idToken string) (uid, phone string, err error) {
@@ -240,6 +290,40 @@ func (a *Auth) Refresh(c *fiber.Ctx) error {
 		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "rotate failed")
 	}
 	return a.issueTokens(c, ctx, &u, fiber.StatusOK)
+}
+
+// DevLogin issues JWTs for a test phone user without going through Firebase.
+// Gated by DEV_MODE=true + DEV_BYPASS_SECRET match. Never enable in production.
+func (a *Auth) DevLogin(c *fiber.Ctx) error {
+	if !a.cfg.DevMode {
+		return models.Err(c, fiber.StatusForbidden, models.ErrUnauthorized, "dev login disabled")
+	}
+	var r devLoginReq
+	if err := c.BodyParser(&r); err != nil {
+		return models.Err(c, fiber.StatusBadRequest, models.ErrValidation, "invalid body")
+	}
+	if a.cfg.DevBypassSecret == "" || r.Secret != a.cfg.DevBypassSecret {
+		return models.Err(c, fiber.StatusForbidden, models.ErrUnauthorized, "invalid dev secret")
+	}
+	r.Phone = strings.TrimSpace(r.Phone)
+	r.Name = strings.TrimSpace(r.Name)
+	if r.Phone == "" {
+		r.Phone = "+84999000001"
+	}
+	if r.Name == "" {
+		r.Name = "Dev User"
+	}
+	// Synthetic firebase_uid so multiple dev phones don't collide.
+	devUID := "dev:" + r.Phone
+
+	ctx, cancel := context.WithTimeout(c.UserContext(), 30*time.Second)
+	defer cancel()
+
+	u, err := upsertPhoneUser(ctx, a.pool, devUID, r.Phone, r.Name)
+	if err != nil {
+		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "dev upsert failed: "+err.Error())
+	}
+	return a.issueTokens(c, ctx, u, fiber.StatusOK)
 }
 
 func (a *Auth) Logout(c *fiber.Ctx) error {

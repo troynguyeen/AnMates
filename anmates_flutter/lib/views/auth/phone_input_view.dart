@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../firebase_options.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/anm_logo.dart';
 import '../../widgets/anm_widgets.dart';
 import 'otp_view.dart';
+
+// Dev bypass — must match backend DEV_BYPASS_SECRET. Override via:
+//   flutter run --dart-define=DEV_BYPASS_SECRET=...
+const _devBypassSecret =
+    String.fromEnvironment('DEV_BYPASS_SECRET', defaultValue: 'dev-local-2026');
+const _devTestPhone = '+84999000001';
+const _devTestName = 'Dev User';
 
 bool _firebaseReady = false;
 
@@ -133,6 +141,26 @@ class _PhoneInputViewState extends State<PhoneInputView> {
     );
   }
 
+  Future<void> _devSkipOtp() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    final name =
+        _nameCtrl.text.trim().isEmpty ? _devTestName : _nameCtrl.text.trim();
+    try {
+      await AuthService().devLogin(
+        secret: _devBypassSecret,
+        phone: _devTestPhone,
+        name: name,
+      );
+      if (!mounted) return;
+      widget.onAuthenticated();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _showError('Dev bypass: ${e.toString().replaceFirst('Exception: ', '')}');
+    }
+  }
+
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -203,6 +231,13 @@ class _PhoneInputViewState extends State<PhoneInputView> {
                           ? AppColors.berry
                           : AppColors.ink30,
                     ),
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 12),
+                      _DevModeButton(
+                        loading: _loading,
+                        onTap: _loading ? null : _devSkipOtp,
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Text(
                       'Tiếp tục đồng nghĩa với việc bạn đồng ý với\nĐiều khoản dịch vụ và Chính sách quyền riêng tư của ĂnMates.',
@@ -217,6 +252,57 @@ class _PhoneInputViewState extends State<PhoneInputView> {
                   ],
                 );
               },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Dev-only bypass button (only when kDebugMode) ───────────────────────────
+class _DevModeButton extends StatelessWidget {
+  final bool loading;
+  final VoidCallback? onTap;
+  const _DevModeButton({required this.loading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const orange = Color(0xFFFF8A1F);
+    return Semantics(
+      identifier: 'dev_mode_skip_otp',
+      button: true,
+      label: 'Dev Mode skip OTP',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey('dev_mode_skip_otp'),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: orange.withOpacity(0.55), width: 1.2),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.bug_report_outlined,
+                    size: 18, color: orange.withOpacity(loading ? 0.5 : 1)),
+                const SizedBox(width: 8),
+                Text(
+                  loading ? 'Đang đăng nhập dev…' : 'Dev Mode (skip OTP)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: orange.withOpacity(loading ? 0.5 : 1),
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

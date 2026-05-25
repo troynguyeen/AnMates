@@ -1,4 +1,18 @@
 {
+  "name": "anmates",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose --env-file .env up",
+    "dev:build": "docker compose --env-file .env up --build",
+    "dev:down": "docker compose --env-file .env down",
+    "dev:logs": "docker compose --env-file .env logs -f",
+    "dev:ps": "docker compose --env-file .env ps",
+    "dev:api": "docker compose --env-file .env up api db",
+    "dev:web": "docker compose --env-file .env up flutter_web",
+    "test:smoke": "cd anmates-api && go test ./smoke/... -v -count=1",
+    "test:e2e": "node scripts/run-flutter.mjs --cwd anmates_flutter test integration_test/",
+    "test:e2e:chrome": "node scripts/run-flutter.mjs --cwd anmates_flutter test integration_test/ -d chrome"
+  },
   "dependencies": {
     "firebase": "^12.13.0"
   }

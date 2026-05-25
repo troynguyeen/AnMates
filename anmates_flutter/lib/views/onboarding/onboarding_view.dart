@@ -40,11 +40,14 @@ class _OnboardingViewState extends State<OnboardingView> {
     if (widget.onFinished != null) {
       widget.onFinished!();
     } else {
-      Navigator.pushReplacement(
-        context,
+      // Capture NavigatorState BEFORE pushReplacement disposes this State —
+      // otherwise the onAuthenticated callback fires against an unmounted
+      // context and silently no-ops.
+      final navigator = Navigator.of(context);
+      navigator.pushReplacement(
         MaterialPageRoute(
           builder: (_) => PhoneInputView(
-            onAuthenticated: () => Navigator.of(context).pushAndRemoveUntil(
+            onAuthenticated: () => navigator.pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const MainTabView()),
               (_) => false,
             ),

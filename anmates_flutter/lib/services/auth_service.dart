@@ -2,7 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _baseUrl = 'http://192.168.88.80:8080';
+// Backend base URL. Override at build/run time:
+//   flutter run --dart-define=API_BASE_URL=http://localhost:8080
+const _baseUrl =
+    String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.88.80:8080');
+
+/// Public copy for tests + dev-only flows (e.g. dev-login button).
+const apiBaseUrl = _baseUrl;
 
 class AuthService {
   static final AuthService _instance = AuthService._();
@@ -32,6 +38,28 @@ class AuthService {
     if (res.statusCode != 200) {
       final msg =
           jsonDecode(res.body)['error']?['message'] ?? 'xác thực thất bại';
+      throw Exception(msg);
+    }
+    final data = jsonDecode(res.body)['data'] as Map<String, dynamic>;
+    await _saveTokens(data);
+    return data;
+  }
+
+  /// Dev-only: skip Firebase OTP via `/api/auth/dev-login`.
+  /// Backend gates the route with `DEV_MODE=true` + matching `DEV_BYPASS_SECRET`.
+  Future<Map<String, dynamic>> devLogin({
+    required String secret,
+    String phone = '+84999000001',
+    String name = 'Dev User',
+  }) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/api/auth/dev-login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'secret': secret, 'phone': phone, 'name': name}),
+    );
+    if (res.statusCode != 200) {
+      final msg =
+          jsonDecode(res.body)['error']?['message'] ?? 'dev login failed';
       throw Exception(msg);
     }
     final data = jsonDecode(res.body)['data'] as Map<String, dynamic>;
