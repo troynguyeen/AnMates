@@ -103,6 +103,7 @@ func main() {
 	matchH := handlers.NewMatching(pool)
 	chatH := handlers.NewChat(pool, hub)
 	noiH := handlers.NewNoiLau(pool)
+	onbH := handlers.NewOnboarding(pool)
 	jwtMW := middleware.JWT(cfg.JWTSecret)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -131,6 +132,16 @@ func main() {
 	auth := api.Use(jwtMW)
 	auth.Get("/profile", userH.GetProfile)
 	auth.Put("/profile", userH.UpdateProfile)
+
+	// Onboarding (Phase 1)
+	auth.Post("/me/face-verify", onbH.FaceVerify)
+	auth.Put("/me/profile-full", onbH.PutProfileFull)
+	auth.Get("/me/tastes", onbH.GetTastes)
+	auth.Put("/me/tastes", onbH.PutTastes)
+	auth.Get("/me/photos", onbH.GetPhotos)
+	auth.Post("/me/photos", onbH.PostPhoto)
+	auth.Delete("/me/photos/:id", onbH.DeletePhoto)
+	auth.Post("/me/onboarding/finish", onbH.FinishOnboarding)
 
 	auth.Get("/wishlist", wlH.List)
 	auth.Post("/wishlist", wlH.Create)

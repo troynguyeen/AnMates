@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'views/splash/splash_screen.dart';
-import 'views/main_tab_view.dart';
+import 'widgets/app_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +34,12 @@ class AnMatesApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       home: const SplashScreen(),
-      builder: _webFrameBuilder,
+      // AppLoader.host wraps the entire navigator so overlay + top-bar loaders
+      // can be triggered from any screen via AppLoader.show / .run.
+      builder: (context, child) {
+        final wrapped = AppLoader.host(child: child ?? const SizedBox.shrink());
+        return _webFrameBuilder(context, wrapped);
+      },
     );
   }
 }

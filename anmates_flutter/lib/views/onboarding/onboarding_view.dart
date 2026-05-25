@@ -5,6 +5,7 @@ import '../../widgets/anm_logo.dart';
 import '../../widgets/anm_widgets.dart';
 import '../auth/phone_input_view.dart';
 import '../main_tab_view.dart';
+import 'face_verify_view.dart';
 
 class OnboardingView extends StatefulWidget {
   final VoidCallback? onFinished;
@@ -44,11 +45,21 @@ class _OnboardingViewState extends State<OnboardingView> {
       // otherwise the onAuthenticated callback fires against an unmounted
       // context and silently no-ops.
       final navigator = Navigator.of(context);
+      // After OTP succeeds, push Face verify → Profile → Tastes → Photos → Home.
+      // Each step's "onFinished" callback eventually lands the user on MainTab.
+      void goHome() => navigator.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainTabView()),
+            (_) => false,
+          );
       navigator.pushReplacement(
         MaterialPageRoute(
           builder: (_) => PhoneInputView(
+            // pushAndRemoveUntil(false) clears the entire stack so back-button
+            // can't drop the user back into the OTP screen mid-onboarding.
             onAuthenticated: () => navigator.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const MainTabView()),
+              MaterialPageRoute(
+                builder: (_) => FaceVerifyView(onFinished: goHome),
+              ),
               (_) => false,
             ),
           ),
@@ -269,52 +280,76 @@ class _Step1Page extends StatelessWidget {
       backgroundColor: AppColors.mint,
       eyebrow: '01 · Chọn quán trước',
       title: 'Hôm nay ăn gì?\nChạm là ra ngay.',
-      body: 'Lắc nhẹ, vuốt nhanh — ĂnMates gợi ý quán vừa túi tiền, vừa tâm trạng, đúng lúc bạn đói nhất.',
-      illustration: _Step1Illustration(),
+      body:
+          'Khám phá theo Genre & Vibe — lẩu sùng sục, cafe khuất hẻm, quán nướng xì xèo… Bookmark vào Wishlist để tính sau.',
+      illustration: const _Step1Illustration(),
     );
   }
 }
 
 class _Step1Illustration extends StatelessWidget {
+  const _Step1Illustration();
+
+  // Polaroid layout matches the design reference: a loose 2×2 grid with
+  // small overlap + tilt. Vertical gap between top + bottom rows is sized
+  // so the title captions ("Lẩu", "Cafe chill") stay fully visible above
+  // the bottom row. Card height = 142, so bottom row starts at top + 150.
   static const _cards = [
-    (label: 'LẨU', angle: -8.0, top: 20.0, left: 10.0, color: AppColors.wisteria),
-    (label: 'CAFE CHILL', angle: 6.0, top: 0.0, left: 90.0, color: AppColors.glaucous),
-    (label: 'ĐỒ NƯỚNG', angle: -4.0, top: 80.0, left: 30.0, color: AppColors.berry),
-    (label: 'ĂN VẶT', angle: 10.0, top: 60.0, left: 110.0, color: AppColors.ocean),
+    (label: 'LẨU',        titleLabel: 'Lẩu',        angle:  -8.0, top:   8.0, left:   8.0),
+    (label: 'CAFE CHILL', titleLabel: 'Cafe chill', angle:   6.0, top:   0.0, left: 150.0),
+    (label: 'ĐỒ NƯỚNG',   titleLabel: 'Đồ nướng',   angle:  -4.0, top: 162.0, left:  26.0),
+    (label: 'ĂN VẶT',     titleLabel: 'Ăn vặt',     angle:  10.0, top: 152.0, left: 168.0),
   ];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 280,
-      height: 220,
+      width: 320,
+      height: 310,
       child: Stack(
-        children: _cards.map((c) {
-          return Positioned(
-            top: c.top,
-            left: c.left,
-            child: Transform.rotate(
-              angle: c.angle * 3.14159 / 180,
-              child: _FoodCard(label: c.label, accentColor: c.color),
-            ),
-          );
-        }).toList(),
+        clipBehavior: Clip.none,
+        children: [
+          const Positioned(
+            top: 32, right: 6,
+            child: Sparkle(
+                size: 20, color: AppColors.wisteriaDeep, animated: true),
+          ),
+          const Positioned(
+            bottom: 6, left: 60,
+            child: Sparkle(
+                size: 14, color: AppColors.wisteria, animated: true),
+          ),
+          ..._cards.map((c) => Positioned(
+                top: c.top,
+                left: c.left,
+                child: Transform.rotate(
+                  angle: c.angle * 3.14159 / 180,
+                  child: _PolaroidCard(
+                    label: c.label,
+                    titleLabel: c.titleLabel,
+                  ),
+                ),
+              )),
+        ],
       ),
     );
   }
 }
 
-class _FoodCard extends StatefulWidget {
+// Polaroid-style card: white frame, wisteria diagonal-stripe "photo" area
+// with a ghost uppercase label, then a title-case caption below.
+class _PolaroidCard extends StatefulWidget {
   final String label;
-  final Color accentColor;
+  final String titleLabel;
 
-  const _FoodCard({required this.label, required this.accentColor});
+  const _PolaroidCard({required this.label, required this.titleLabel});
 
   @override
-  State<_FoodCard> createState() => _FoodCardState();
+  State<_PolaroidCard> createState() => _PolaroidCardState();
 }
 
-class _FoodCardState extends State<_FoodCard> with SingleTickerProviderStateMixin {
+class _PolaroidCardState extends State<_PolaroidCard>
+    with SingleTickerProviderStateMixin {
   bool _hovered = false;
   late final AnimationController _floatCtrl;
   late final Animation<double> _floatAnim;
@@ -322,17 +357,16 @@ class _FoodCardState extends State<_FoodCard> with SingleTickerProviderStateMixi
   @override
   void initState() {
     super.initState();
-    // Different duration per card so they float out of sync
-    final durationMs = 2000 + (widget.label.hashCode.abs() % 600);
+    // Stagger float per card so the deck breathes asymmetrically.
+    final durationMs = 2400 + (widget.label.hashCode.abs() % 700);
     _floatCtrl = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: durationMs),
     );
-    _floatAnim = Tween<double>(begin: -5.0, end: 5.0).animate(
+    _floatAnim = Tween<double>(begin: -3.0, end: 3.0).animate(
       CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
     );
-    // Stagger start using label length so cards don't all move together
-    final delayMs = (widget.label.length * 120) % 900;
+    final delayMs = (widget.label.length * 130) % 1100;
     Future.delayed(Duration(milliseconds: delayMs), () {
       if (mounted) _floatCtrl.repeat(reverse: true);
     });
@@ -357,57 +391,62 @@ class _FoodCardState extends State<_FoodCard> with SingleTickerProviderStateMixi
         onExit: (_) => setState(() => _hovered = false),
         cursor: SystemMouseCursors.click,
         child: AnimatedScale(
-          scale: _hovered ? 1.07 : 1.0,
+          scale: _hovered ? 1.04 : 1.0,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 120,
-            height: 150,
+          child: Container(
+            width: 124,
+            height: 142,
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
               color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: widget.accentColor
-                      .withOpacity(_hovered ? 0.35 : 0.20),
-                  blurRadius: _hovered ? 24 : 14,
-                  offset: Offset(0, _hovered ? 10 : 6),
+                  color: AppColors.ink.withOpacity(_hovered ? 0.18 : 0.10),
+                  blurRadius: _hovered ? 18 : 12,
+                  offset: Offset(0, _hovered ? 8 : 4),
                 ),
               ],
-              border: Border.all(
-                color: _hovered
-                    ? widget.accentColor.withOpacity(0.35)
-                    : AppColors.ink10,
-              ),
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.accentColor
-                        .withOpacity(_hovered ? 0.22 : 0.15),
-                  ),
-                  child: Center(
-                    child: Icon(Icons.restaurant,
-                        color: widget.accentColor, size: 28),
+                // Striped "photo" area with ghost uppercase label.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 96,
+                    child: CustomPaint(
+                      painter: _DiagonalStripePainter(),
+                      child: Center(
+                        child: Text(
+                          widget.label,
+                          style: AppTextStyles.mono(
+                            size: 10,
+                            weight: FontWeight.w700,
+                            color: AppColors.ink.withOpacity(0.35),
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.label,
-                  style: AppTextStyles.mono(
-                    size: 10,
-                    weight: FontWeight.w700,
-                    color: AppColors.ink,
-                    letterSpacing: 1.5,
+                // Polaroid caption strip.
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2, top: 8),
+                    child: Text(
+                      widget.titleLabel,
+                      style: GoogleFonts.beVietnamPro(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -416,6 +455,32 @@ class _FoodCardState extends State<_FoodCard> with SingleTickerProviderStateMixi
       ),
     );
   }
+}
+
+class _DiagonalStripePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Wisteria base wash for the "photo" area.
+    final base = Paint()..color = AppColors.wisteria.withOpacity(0.18);
+    canvas.drawRect(Offset.zero & size, base);
+
+    // Diagonal stripes (~45°) drawn in wisteriaDeep.
+    final stripe = Paint()
+      ..color = AppColors.wisteriaDeep.withOpacity(0.28)
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.square;
+    const gap = 14.0;
+    for (double x = -size.height; x < size.width + size.height; x += gap) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        stripe,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DiagonalStripePainter old) => false;
 }
 
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
