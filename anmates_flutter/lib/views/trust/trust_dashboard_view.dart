@@ -70,7 +70,7 @@ class TrustDashboardView extends StatelessWidget {
             _buildTopBar(context),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
                 children: [
                   _buildHeroRing(),
                   const SizedBox(height: 16),
@@ -80,7 +80,6 @@ class TrustDashboardView extends StatelessWidget {
                 ],
               ),
             ),
-            AnmTabBar(activeIndex: 3),
           ],
         ),
       ),

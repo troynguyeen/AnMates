@@ -206,7 +206,7 @@ class _PhoneInputViewState extends State<PhoneInputView> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    const LogoMark(size: 64),
+                    const LogoMark(size: 64, float: true),
                     const SizedBox(height: 24),
                     ScreenTitle(
                       title: 'Va Mates, ăn miết.',
@@ -356,10 +356,10 @@ class _PhoneFieldState extends State<_PhoneField> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '🇻🇳 +84',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.ink70,
                 ),
               ),
             ),

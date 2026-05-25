@@ -24,40 +24,30 @@ class _WishlistViewState extends State<WishlistView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mint,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader()),
-              SliverToBoxAdapter(child: _buildMemoryFilmStrip()),
-              SliverToBoxAdapter(child: _buildDistrictFilters()),
-              SliverToBoxAdapter(child: _buildDistrictSection(
-                district: 'QUẬN 1',
-                count: 12,
-                accentColor: AppColors.berry,
-                cards: _q1Cards,
-              )),
-              SliverToBoxAdapter(child: _buildDistrictSection(
-                district: 'QUẬN 3',
-                count: 8,
-                accentColor: AppColors.ocean,
-                cards: _q3Cards,
-              )),
-              SliverToBoxAdapter(child: _buildDistrictSection(
-                district: 'QUẬN 5',
-                count: 6,
-                accentColor: AppColors.wisteria,
-                cards: _q5Cards,
-              )),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AnmTabBar(activeIndex: 1),
-          ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeader()),
+          SliverToBoxAdapter(child: _buildMemoryFilmStrip()),
+          SliverToBoxAdapter(child: _buildDistrictFilters()),
+          SliverToBoxAdapter(child: _buildDistrictSection(
+            district: 'QUẬN 1',
+            count: 12,
+            accentColor: AppColors.berry,
+            cards: _q1Cards,
+          )),
+          SliverToBoxAdapter(child: _buildDistrictSection(
+            district: 'QUẬN 3',
+            count: 8,
+            accentColor: AppColors.ocean,
+            cards: _q3Cards,
+          )),
+          SliverToBoxAdapter(child: _buildDistrictSection(
+            district: 'QUẬN 5',
+            count: 6,
+            accentColor: AppColors.wisteria,
+            cards: _q5Cards,
+          )),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );

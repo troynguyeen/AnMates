@@ -73,7 +73,8 @@ class _SplashScreenState extends State<SplashScreen>
                 opacity: 0.35,
                 child: Sparkle(
                   size: 36,
-                  color: Colors.white.withOpacity(1),
+                  color: Colors.white,
+                  animated: true,
                 ),
               ),
             ),
@@ -84,7 +85,8 @@ class _SplashScreenState extends State<SplashScreen>
                 opacity: 0.25,
                 child: Sparkle(
                   size: 52,
-                  color: Colors.white.withOpacity(1),
+                  color: Colors.white,
+                  animated: true,
                 ),
               ),
             ),
@@ -95,7 +97,8 @@ class _SplashScreenState extends State<SplashScreen>
                 opacity: 0.4,
                 child: Sparkle(
                   size: 28,
-                  color: Colors.white.withOpacity(1),
+                  color: Colors.white,
+                  animated: true,
                 ),
               ),
             ),
@@ -106,7 +109,8 @@ class _SplashScreenState extends State<SplashScreen>
                 opacity: 0.30,
                 child: Sparkle(
                   size: 44,
-                  color: Colors.white.withOpacity(1),
+                  color: Colors.white,
+                  animated: true,
                 ),
               ),
             ),
@@ -119,7 +123,8 @@ class _SplashScreenState extends State<SplashScreen>
                   LogoMark(
                     size: 130,
                     fill: Colors.white,
-                    accent: AppColors.mint,
+                    accent: AppColors.berry,
+                    float: true,
                   ),
                   const SizedBox(height: 20),
                   // Wordmark: "Ăn" white, "Mates" mint
@@ -129,19 +134,19 @@ class _SplashScreenState extends State<SplashScreen>
                         TextSpan(
                           text: 'Ăn',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 40,
+                            fontSize: 44,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
-                            letterSpacing: -1.0,
+                            letterSpacing: -1.5,
                           ),
                         ),
                         TextSpan(
                           text: 'Mates',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 40,
+                            fontSize: 44,
                             fontWeight: FontWeight.w800,
                             color: AppColors.mint,
-                            letterSpacing: -1.0,
+                            letterSpacing: -1.5,
                           ),
                         ),
                       ],
@@ -207,10 +212,10 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 12),
                   Text(
                     'Đang nhóm lửa nồi lẩu…',
-                    style: GoogleFonts.beVietnamPro(
-                      fontSize: 13,
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withOpacity(0.70),
                     ),
                   ),
                 ],

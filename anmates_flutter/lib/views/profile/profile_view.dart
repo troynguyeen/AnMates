@@ -12,64 +12,46 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
-  int _activeTabIndex = 3;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mint,
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Top bar ──────────────────────────────────────────────
-                  _TopBar(),
-                  const SizedBox(height: 20),
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Top bar ──────────────────────────────────────────────
+              _TopBar(),
+              const SizedBox(height: 20),
 
-                  // ── Avatar + info row ────────────────────────────────────
-                  _AvatarInfoRow(),
-                  const SizedBox(height: 20),
+              // ── Avatar + info row ────────────────────────────────────
+              _AvatarInfoRow(),
+              const SizedBox(height: 20),
 
-                  // ── Astrology card ───────────────────────────────────────
-                  _AstrologyCard(),
-                  const SizedBox(height: 16),
+              // ── Astrology card ───────────────────────────────────────
+              _AstrologyCard(),
+              const SizedBox(height: 16),
 
-                  // ── Stats grid ───────────────────────────────────────────
-                  _StatsGrid(),
-                  const SizedBox(height: 20),
+              // ── Stats grid ───────────────────────────────────────────
+              _StatsGrid(),
+              const SizedBox(height: 20),
 
-                  // ── Photo album ──────────────────────────────────────────
-                  _PhotoAlbumSection(),
-                  const SizedBox(height: 20),
+              // ── Photo album ──────────────────────────────────────────
+              _PhotoAlbumSection(),
+              const SizedBox(height: 20),
 
-                  // ── Food preferences ─────────────────────────────────────
-                  _FoodPrefsSection(),
-                  const SizedBox(height: 20),
+              // ── Food preferences ─────────────────────────────────────
+              _FoodPrefsSection(),
+              const SizedBox(height: 20),
 
-                  // ── Subscription section ─────────────────────────────────
-                  _SubscriptionSection(),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
+              // ── Subscription section ─────────────────────────────────
+              _SubscriptionSection(),
+              const SizedBox(height: 120),
+            ],
           ),
-
-          // ── Fixed bottom tab bar ─────────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AnmTabBar(
-              activeIndex: _activeTabIndex,
-              onTap: (i) => setState(() => _activeTabIndex = i),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

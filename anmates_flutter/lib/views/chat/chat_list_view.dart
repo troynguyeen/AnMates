@@ -114,7 +114,7 @@ class _ChatListViewState extends State<ChatListView> {
             _buildHeader(),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 120),
                 children: [
                   _buildNewMatchSection(),
                   const SizedBox(height: 8),
@@ -124,7 +124,6 @@ class _ChatListViewState extends State<ChatListView> {
                 ],
               ),
             ),
-            AnmTabBar(activeIndex: 2),
           ],
         ),
       ),

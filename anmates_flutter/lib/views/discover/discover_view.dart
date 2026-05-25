@@ -18,33 +18,22 @@ class _DiscoverViewState extends State<DiscoverView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mint,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopBar(),
-                const SizedBox(height: 12),
-                _buildSearchBar(),
-                const SizedBox(height: 24),
-                _buildGenreSection(),
-                const SizedBox(height: 24),
-                _buildVibeSection(),
-                const SizedBox(height: 24),
-                _buildHotNearbySection(),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: AnmTabBar(activeIndex: 0),
-          ),
-        ],
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTopBar(),
+            const SizedBox(height: 12),
+            _buildSearchBar(),
+            const SizedBox(height: 24),
+            _buildGenreSection(),
+            const SizedBox(height: 24),
+            _buildVibeSection(),
+            const SizedBox(height: 24),
+            _buildHotNearbySection(),
+            const SizedBox(height: 120),
+          ],
+        ),
       ),
     );
   }
@@ -55,7 +44,7 @@ class _DiscoverViewState extends State<DiscoverView> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          LogoMark(size: 32),
+          const LogoMark(size: 32, float: true),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -95,7 +84,7 @@ class _DiscoverViewState extends State<DiscoverView> {
         height: 48,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: AppColors.ink.withOpacity(0.06),
@@ -148,53 +137,29 @@ class _DiscoverViewState extends State<DiscoverView> {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 90,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              _GenreCard(
-                label: 'Lẩu sùng sục',
-                emoji: '🍲',
-                gradient: const LinearGradient(
-                  colors: [AppColors.berry, AppColors.berryDeep],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              const SizedBox(width: 10),
-              _GenreCard(
-                label: 'Nướng xì xèo',
-                emoji: '🥩',
-                gradient: const LinearGradient(
-                  colors: [AppColors.wisteria, AppColors.wisteriaDeep],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              const SizedBox(width: 10),
-              _GenreCard(
-                label: 'Cafe chill',
-                emoji: '☕',
-                gradient: const LinearGradient(
-                  colors: [AppColors.ocean, AppColors.oceanDeep],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              const SizedBox(width: 10),
-              _GenreCard(
-                label: 'Ăn vặt phố',
-                emoji: '🍢',
-                gradient: LinearGradient(
-                  colors: [AppColors.glaucous, AppColors.glaucous.withOpacity(0.7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ],
-          ),
+        _HorizontalDraggableGenreList(
+          items: [
+            ('Lẩu sùng sục', '🍲', const LinearGradient(
+              colors: [AppColors.berry, AppColors.berryDeep],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )),
+            ('Nướng xì xèo', '🥩', const LinearGradient(
+              colors: [AppColors.wisteria, AppColors.wisteriaDeep],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )),
+            ('Cafe chill', '☕', const LinearGradient(
+              colors: [AppColors.ocean, AppColors.oceanDeep],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )),
+            ('Ăn vặt phố', '🍢', LinearGradient(
+              colors: [AppColors.glaucous, AppColors.glaucous.withOpacity(0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )),
+          ],
         ),
       ],
     );
@@ -280,7 +245,107 @@ class _DiscoverViewState extends State<DiscoverView> {
   }
 }
 
-class _GenreCard extends StatelessWidget {
+class _HorizontalDraggableGenreList extends StatefulWidget {
+  final List<(String label, String emoji, LinearGradient gradient)> items;
+
+  const _HorizontalDraggableGenreList({required this.items});
+
+  @override
+  State<_HorizontalDraggableGenreList> createState() => _HorizontalDraggableGenreListState();
+}
+
+class _HorizontalDraggableGenreListState extends State<_HorizontalDraggableGenreList> {
+  late final ScrollController _scrollCtrl;
+  bool _isDragging = false;
+  double _dragStart = 0;
+  double _scrollStart = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onMouseDown(PointerDownEvent event) {
+    setState(() => _isDragging = true);
+    _dragStart = event.position.dx;
+    _scrollStart = _scrollCtrl.offset;
+  }
+
+  void _onMouseMove(PointerMoveEvent event) {
+    if (!_isDragging) return;
+    final delta = event.position.dx - _dragStart;
+    _scrollCtrl.jumpTo(_scrollStart - delta);
+  }
+
+  void _onMouseUp(PointerUpEvent event) {
+    setState(() => _isDragging = false);
+  }
+
+  void _onTouchStart(PointerDownEvent event) {
+    setState(() => _isDragging = true);
+    _dragStart = event.position.dx;
+    _scrollStart = _scrollCtrl.offset;
+  }
+
+  void _onTouchMove(PointerMoveEvent event) {
+    if (!_isDragging) return;
+    final delta = event.position.dx - _dragStart;
+    _scrollCtrl.jumpTo(_scrollStart - delta);
+  }
+
+  void _onTouchEnd(PointerUpEvent event) {
+    setState(() => _isDragging = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: _onMouseDown,
+      onPointerMove: _onMouseMove,
+      onPointerUp: _onMouseUp,
+      child: MouseRegion(
+        cursor: _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
+        child: SizedBox(
+          height: 90,
+          child: SingleChildScrollView(
+            controller: _scrollCtrl,
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  ...widget.items.indexed.map((indexed) {
+                    final (i, (label, emoji, gradient)) = indexed;
+                    return Row(
+                      children: [
+                        if (i > 0) const SizedBox(width: 10),
+                        _GenreCard(
+                          label: label,
+                          emoji: emoji,
+                          gradient: gradient,
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenreCard extends StatefulWidget {
   final String label;
   final String emoji;
   final LinearGradient gradient;
@@ -292,47 +357,99 @@ class _GenreCard extends StatelessWidget {
   });
 
   @override
+  State<_GenreCard> createState() => _GenreCardState();
+}
+
+class _GenreCardState extends State<_GenreCard> with SingleTickerProviderStateMixin {
+  bool _hovered = false;
+  late final AnimationController _emojiCtrl;
+  late final Animation<double> _emojiFloat;
+
+  @override
+  void initState() {
+    super.initState();
+    final durationMs = 1800 + (widget.emoji.hashCode.abs() % 500);
+    _emojiCtrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: durationMs),
+    );
+    _emojiFloat = Tween<double>(begin: 0.0, end: -7.0).animate(
+      CurvedAnimation(parent: _emojiCtrl, curve: Curves.easeInOut),
+    );
+    final delayMs = (widget.label.length * 160) % 700;
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) _emojiCtrl.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _emojiCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      height: 90,
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.colors.first.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 10,
-            top: 10,
-            child: Text(emoji, style: const TextStyle(fontSize: 28)),
-          ),
-          Positioned(
-            left: 12,
-            bottom: 12,
-            child: Text(
-              label,
-              style: GoogleFonts.beVietnamPro(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedScale(
+        scale: _hovered ? 1.05 : 1.0,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 140,
+          height: 90,
+          decoration: BoxDecoration(
+            gradient: widget.gradient,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: widget.gradient.colors.first
+                    .withOpacity(_hovered ? 0.48 : 0.30),
+                blurRadius: _hovered ? 20 : 10,
+                offset: Offset(0, _hovered ? 8 : 4),
               ),
-            ),
+            ],
           ),
-        ],
+          child: Stack(
+            children: [
+              Positioned(
+                right: 10,
+                top: 10,
+                child: AnimatedBuilder(
+                  animation: _emojiFloat,
+                  builder: (_, child) => Transform.translate(
+                    offset: Offset(0, _hovered ? -7 : _emojiFloat.value),
+                    child: child,
+                  ),
+                  child: Text(widget.emoji,
+                      style: const TextStyle(fontSize: 28)),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                bottom: 12,
+                child: Text(
+                  widget.label,
+                  style: GoogleFonts.beVietnamPro(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _RestaurantRow extends StatelessWidget {
+class _RestaurantRow extends StatefulWidget {
   final String name;
   final String tag;
   final String dist;
@@ -348,21 +465,35 @@ class _RestaurantRow extends StatelessWidget {
   });
 
   @override
+  State<_RestaurantRow> createState() => _RestaurantRowState();
+}
+
+class _RestaurantRowState extends State<_RestaurantRow> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(12),
+        transform: Matrix4.translationValues(0, _hovered ? -3 : 0, 0),
+        decoration: BoxDecoration(
+          color: _hovered ? const Color(0xFFF8FFFB) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.ink.withOpacity(_hovered ? 0.09 : 0.05),
+              blurRadius: _hovered ? 20 : 12,
+              offset: Offset(0, _hovered ? 8 : 4),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           PhotoSlot(width: 68, height: 68, radius: 14, label: '📸'),
           const SizedBox(width: 12),
@@ -374,7 +505,7 @@ class _RestaurantRow extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        name,
+                        widget.name,
                         style: AppTextStyles.body(
                           size: 14,
                           weight: FontWeight.w700,
@@ -384,13 +515,13 @@ class _RestaurantRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (hot)
+                    if (widget.hot)
                       Text('🔥', style: const TextStyle(fontSize: 14)),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '$tag · $dist',
+                  '${widget.tag} · ${widget.dist}',
                   style: AppTextStyles.body(
                     size: 12,
                     color: AppColors.ink50,
@@ -400,17 +531,24 @@ class _RestaurantRow extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.berry,
+                    color: AppColors.berry.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(
-                    '$peopleCraving người đang thèm',
-                    style: AppTextStyles.mono(
-                      size: 9,
-                      weight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Sparkle(size: 9, color: AppColors.berry),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${widget.peopleCraving} người đang thèm',
+                        style: AppTextStyles.mono(
+                          size: 9,
+                          weight: FontWeight.w700,
+                          color: AppColors.berry,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -430,6 +568,7 @@ class _RestaurantRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

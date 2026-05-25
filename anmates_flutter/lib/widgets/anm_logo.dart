@@ -1,19 +1,58 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 // ─── 4-point sparkle (brand motif) ──────────────────────────────────────────
-class Sparkle extends StatelessWidget {
+class Sparkle extends StatefulWidget {
   final double size;
   final Color color;
+  final bool animated;
 
-  const Sparkle({super.key, this.size = 24, this.color = AppColors.berry});
+  const Sparkle({
+    super.key,
+    this.size = 24,
+    this.color = AppColors.berry,
+    this.animated = false,
+  });
+
+  @override
+  State<Sparkle> createState() => _SparkleState();
+}
+
+class _SparkleState extends State<Sparkle> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    );
+    if (widget.animated) _ctrl.repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(painter: _SparklePainter(color)),
+    final child = SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: CustomPaint(painter: _SparklePainter(widget.color)),
+    );
+    if (!widget.animated) return child;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, c) => Transform.rotate(
+        angle: _ctrl.value * 2 * math.pi,
+        child: c,
+      ),
+      child: child,
     );
   }
 }
@@ -24,12 +63,12 @@ class _SparklePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
     final cx = size.width / 2;
     final cy = size.height / 2;
     final path = Path();
-    // 4-point star: M12 0 C12.8 8 16 11.2 24 12 C16 12.8 12.8 16 12 24...
-    // scaled to [0,size]
     final s = size.width / 24;
     path.moveTo(cx, 0);
     path.cubicTo(cx + 0.8 * s, 8 * s, cx + 4 * s, cy - 0.8 * s, size.width, cy);
@@ -45,25 +84,62 @@ class _SparklePainter extends CustomPainter {
 }
 
 // ─── Logo Mark ────────────────────────────────────────────────────────────────
-// Location pin: circular dining-table head with crossed chopsticks + heart tip
-class LogoMark extends StatelessWidget {
+class LogoMark extends StatefulWidget {
   final double size;
   final Color fill;
   final Color accent;
+  final bool float;
 
   const LogoMark({
     super.key,
     this.size = 96,
     this.fill = AppColors.berry,
     this.accent = AppColors.mint,
+    this.float = false,
   });
 
   @override
+  State<LogoMark> createState() => _LogoMarkState();
+}
+
+class _LogoMarkState extends State<LogoMark> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _floatAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    );
+    _floatAnim = Tween<double>(begin: -4.0, end: 4.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+    if (widget.float) _ctrl.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size * 1.18,
-      child: CustomPaint(painter: _LogoPainter(fill, accent)),
+    final logo = SizedBox(
+      width: widget.size,
+      height: widget.size * 1.18,
+      child: CustomPaint(painter: _LogoPainter(widget.fill, widget.accent)),
+    );
+    if (!widget.float) return logo;
+    return AnimatedBuilder(
+      animation: _floatAnim,
+      builder: (_, c) => Transform.translate(
+        offset: Offset(0, _floatAnim.value),
+        child: c,
+      ),
+      child: logo,
     );
   }
 }
@@ -80,7 +156,6 @@ class _LogoPainter extends CustomPainter {
     final sx = w / 100.0;
     final sy = h / 118.0;
 
-    // Pin body gradient
     final pinPaint = Paint()
       ..shader = LinearGradient(
         colors: [fill, AppColors.berryDeep],
@@ -101,35 +176,22 @@ class _LogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(pin, pinPaint);
 
-    // Dining table circle
     final tablePaint = Paint()..color = accent..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(50 * sx, 44 * sy), 22 * sy, tablePaint);
 
-    // Table border
     final borderPaint = Paint()
       ..color = AppColors.ink10
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawCircle(Offset(50 * sx, 44 * sy), 22 * sy, borderPaint);
 
-    // Crossed chopsticks
     final chopstickPaint = Paint()
       ..color = AppColors.ink
       ..style = PaintingStyle.fill;
 
     canvas.save();
     canvas.translate(50 * sx, 44 * sy);
-    canvas.rotate(28 * 3.14159 / 180);
-    final stick1 = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset.zero, width: 3 * sx, height: 44 * sy),
-      const Radius.circular(1.5),
-    );
-    canvas.drawRRect(stick1, chopstickPaint);
-    canvas.restore();
-
-    canvas.save();
-    canvas.translate(50 * sx, 44 * sy);
-    canvas.rotate(-28 * 3.14159 / 180);
+    canvas.rotate(28 * math.pi / 180);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset.zero, width: 3 * sx, height: 44 * sy),
@@ -139,7 +201,18 @@ class _LogoPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // Heart at intersection
+    canvas.save();
+    canvas.translate(50 * sx, 44 * sy);
+    canvas.rotate(-28 * math.pi / 180);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset.zero, width: 3 * sx, height: 44 * sy),
+        const Radius.circular(1.5),
+      ),
+      chopstickPaint,
+    );
+    canvas.restore();
+
     final heartPaint = Paint()..color = AppColors.berry..style = PaintingStyle.fill;
     final heart = Path();
     final hx = 50 * sx;
@@ -153,7 +226,6 @@ class _LogoPainter extends CustomPainter {
     heart.close();
     canvas.drawPath(heart, heartPaint);
 
-    // Sparkle at pin tip
     final sparklePaint = Paint()..color = accent..style = PaintingStyle.fill;
     final spx = 50 * sx;
     final spy = 88 * sy;

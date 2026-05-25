@@ -238,7 +238,7 @@ class _StepLayout extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: AppColors.ink,
                     height: 1.15,
-                    letterSpacing: -1.0,
+                    letterSpacing: -1.2,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -267,7 +267,7 @@ class _Step1Page extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StepLayout(
       backgroundColor: AppColors.mint,
-      eyebrow: 'BƯỚC 1 / 3',
+      eyebrow: '01 · Chọn quán trước',
       title: 'Hôm nay ăn gì?\nChạm là ra ngay.',
       body: 'Lắc nhẹ, vuốt nhanh — ĂnMates gợi ý quán vừa túi tiền, vừa tâm trạng, đúng lúc bạn đói nhất.',
       illustration: _Step1Illustration(),
@@ -304,55 +304,115 @@ class _Step1Illustration extends StatelessWidget {
   }
 }
 
-class _FoodCard extends StatelessWidget {
+class _FoodCard extends StatefulWidget {
   final String label;
   final Color accentColor;
 
   const _FoodCard({required this.label, required this.accentColor});
 
   @override
+  State<_FoodCard> createState() => _FoodCardState();
+}
+
+class _FoodCardState extends State<_FoodCard> with SingleTickerProviderStateMixin {
+  bool _hovered = false;
+  late final AnimationController _floatCtrl;
+  late final Animation<double> _floatAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    // Different duration per card so they float out of sync
+    final durationMs = 2000 + (widget.label.hashCode.abs() % 600);
+    _floatCtrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: durationMs),
+    );
+    _floatAnim = Tween<double>(begin: -5.0, end: 5.0).animate(
+      CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
+    );
+    // Stagger start using label length so cards don't all move together
+    final delayMs = (widget.label.length * 120) % 900;
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      if (mounted) _floatCtrl.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _floatCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      height: 150,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withOpacity(0.20),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-        border: Border.all(color: AppColors.ink10),
+    return AnimatedBuilder(
+      animation: _floatAnim,
+      builder: (_, child) => Transform.translate(
+        offset: Offset(0, _floatAnim.value),
+        child: child,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        cursor: SystemMouseCursors.click,
+        child: AnimatedScale(
+          scale: _hovered ? 1.07 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 120,
+            height: 150,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: accentColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: widget.accentColor
+                      .withOpacity(_hovered ? 0.35 : 0.20),
+                  blurRadius: _hovered ? 24 : 14,
+                  offset: Offset(0, _hovered ? 10 : 6),
+                ),
+              ],
+              border: Border.all(
+                color: _hovered
+                    ? widget.accentColor.withOpacity(0.35)
+                    : AppColors.ink10,
+              ),
             ),
-            child: Center(
-              child: Icon(Icons.restaurant, color: accentColor, size: 28),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.accentColor
+                        .withOpacity(_hovered ? 0.22 : 0.15),
+                  ),
+                  child: Center(
+                    child: Icon(Icons.restaurant,
+                        color: widget.accentColor, size: 28),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.label,
+                  style: AppTextStyles.mono(
+                    size: 10,
+                    weight: FontWeight.w700,
+                    color: AppColors.ink,
+                    letterSpacing: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: AppTextStyles.mono(
-              size: 10,
-              weight: FontWeight.w700,
-              color: AppColors.ink,
-              letterSpacing: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -366,7 +426,7 @@ class _Step2Page extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StepLayout(
       backgroundColor: const Color(0xFFFAF1F5),
-      eyebrow: 'BƯỚC 2 / 3',
+      eyebrow: '02 · Match cùng quán',
       title: 'Ai cũng đang\nthèm quán này?',
       body: 'Xem ai trong vùng đang đói cùng món. Ghép Mate, hẹn bàn, chia bill — không còn ăn một mình.',
       illustration: const _Step2Illustration(),
@@ -514,7 +574,7 @@ class _Step3Page extends StatelessWidget {
   Widget build(BuildContext context) {
     return _StepLayout(
       backgroundColor: const Color(0xFFF2EEFB),
-      eyebrow: 'BƯỚC 3 / 3',
+      eyebrow: '03 · Nồi lẩu tự sôi',
       title: 'Trò chuyện đủ\nấm, mới chốt kèo.',
       body: 'Vibe check từng bước — từ chat đến bữa ăn thật. Điểm tin cậy minh bạch, không sến, không lo.',
       illustration: const _Step3Illustration(),

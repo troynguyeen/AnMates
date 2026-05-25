@@ -263,7 +263,7 @@ class _OtpViewState extends State<OtpView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Eyebrow('XÁC THỰC SỐ ĐIỆN THOẠI'),
+                  const Eyebrow('BƯỚC 2 / 5'),
                   const SizedBox(height: 10),
                   ScreenTitle(
                     title: 'Nhập mã 6 số',
@@ -360,7 +360,7 @@ class _OtpBox extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: 48,
-      height: 58,
+      height: 48,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -433,7 +433,7 @@ class _NumericKeypad extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 3,
-        childAspectRatio: 2.2,
+        childAspectRatio: 1.6,
         mainAxisSpacing: 8,
         crossAxisSpacing: 10,
         children: _keys

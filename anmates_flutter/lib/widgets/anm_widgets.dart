@@ -5,7 +5,7 @@ import '../theme/app_theme.dart';
 import 'anm_logo.dart';
 
 // ─── CTA Button ──────────────────────────────────────────────────────────────
-class AnmCTA extends StatelessWidget {
+class AnmCTA extends StatefulWidget {
   final String label;
   final VoidCallback? onTap;
   final Color background;
@@ -24,25 +24,61 @@ class AnmCTA extends StatelessWidget {
   });
 
   @override
+  State<AnmCTA> createState() => _AnmCTAState();
+}
+
+class _AnmCTAState extends State<AnmCTA> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: fullWidth ? double.infinity : null,
-      height: height ?? 56,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: background,
-          foregroundColor: foreground,
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-        ).copyWith(
-          overlayColor: WidgetStateProperty.all(Colors.white12),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.cta(color: foreground),
+    final isBerry = widget.background == AppColors.berry;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.forbidden,
+      child: AnimatedScale(
+        scale: (_hovered && widget.onTap != null) ? 1.025 : 1.0,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: widget.fullWidth ? double.infinity : null,
+          height: widget.height ?? 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: isBerry
+                ? [
+                    BoxShadow(
+                      color: AppColors.berry.withOpacity(
+                          (_hovered && widget.onTap != null) ? 0.50 : 0.35),
+                      blurRadius: (_hovered && widget.onTap != null) ? 36 : 24,
+                      offset: (_hovered && widget.onTap != null)
+                          ? const Offset(0, 12)
+                          : const Offset(0, 8),
+                    ),
+                  ]
+                : const [],
+          ),
+          child: ElevatedButton(
+            onPressed: widget.onTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.background,
+              foregroundColor: widget.foreground,
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
+              elevation: 0,
+              shadowColor: Colors.transparent,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(Colors.white12),
+            ),
+            child: Text(
+              widget.label,
+              style: AppTextStyles.cta(color: widget.foreground),
+            ),
+          ),
         ),
       ),
     );
@@ -83,7 +119,7 @@ class AnmGhostBtn extends StatelessWidget {
 }
 
 // ─── Pill Chip / Tag ──────────────────────────────────────────────────────────
-class AnmChip extends StatelessWidget {
+class AnmChip extends StatefulWidget {
   final String label;
   final bool active;
   final Color? color;
@@ -102,35 +138,56 @@ class AnmChip extends StatelessWidget {
   });
 
   @override
+  State<AnmChip> createState() => _AnmChipState();
+}
+
+class _AnmChipState extends State<AnmChip> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final activeColor = color ?? AppColors.ink;
-    final padding = sm
+    final activeColor = widget.color ?? AppColors.ink;
+    final padding = widget.sm
         ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 10);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: active
-              ? activeColor
-              : dark
-                  ? Colors.white12
-                  : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: active
-                ? Colors.transparent
-                : dark
-                    ? Colors.white24
-                    : AppColors.ink10,
-            width: 1,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedScale(
+        scale: _hovered ? 1.05 : 1.0,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: padding,
+            decoration: BoxDecoration(
+              color: widget.active
+                  ? activeColor
+                  : _hovered
+                      ? (widget.dark
+                          ? Colors.white.withOpacity(0.18)
+                          : activeColor.withOpacity(0.08))
+                      : (widget.dark ? Colors.white12 : Colors.white),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: widget.active
+                    ? Colors.transparent
+                    : _hovered
+                        ? (widget.dark ? Colors.white38 : activeColor.withOpacity(0.35))
+                        : (widget.dark ? Colors.white24 : AppColors.ink10),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              widget.label,
+              style: AppTextStyles.chip(
+                  active: widget.active, color: widget.dark ? Colors.white : null),
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.chip(active: active, color: dark ? Colors.white : null),
         ),
       ),
     );
@@ -400,6 +457,22 @@ class _TrustRingPainter extends CustomPainter {
 }
 
 // ─── Vibe Progress Bar ────────────────────────────────────────────────────────
+class _VibeStage {
+  final int p;
+  final String emoji;
+  final String name;
+  final bool gate;
+  const _VibeStage({required this.p, required this.emoji, required this.name, this.gate = false});
+}
+
+const _vibeStages = [
+  _VibeStage(p: 0, emoji: '👋', name: 'Hi'),
+  _VibeStage(p: 25, emoji: '💬', name: 'Tám'),
+  _VibeStage(p: 50, emoji: '✨', name: 'Vibe'),
+  _VibeStage(p: 70, emoji: '🍜', name: 'Date', gate: true),
+  _VibeStage(p: 100, emoji: '🔥', name: 'Ăn miết'),
+];
+
 class VibeProgressBar extends StatelessWidget {
   final int percent;
   final bool unlocked;
@@ -408,14 +481,6 @@ class VibeProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stages = [
-      (p: 0, emoji: '👋', name: 'Hi'),
-      (p: 25, emoji: '💬', name: 'Tám'),
-      (p: 50, emoji: '✨', name: 'Vibe'),
-      (p: 70, emoji: '🍜', name: 'Date', gate: true),
-      (p: 100, emoji: '🔥', name: 'Ăn miết'),
-    ];
-
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -434,7 +499,7 @@ class VibeProgressBar extends StatelessWidget {
                     colors: [AppColors.berry, AppColors.wisteriaDeep],
                   ),
                 ),
-                child: const Center(child: Sparkle(size: 13, color: Colors.white)),
+                child: const Center(child: Sparkle(size: 13, color: Colors.white, animated: true)),
               ),
               const SizedBox(width: 8),
               ShaderMask(
@@ -490,13 +555,70 @@ class VibeProgressBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Progress bar
-          SizedBox(
-            height: 28,
-            child: CustomPaint(
-              size: const Size(double.infinity, 28),
-              painter: _VibeBarPainter(percent / 100),
-            ),
+          // Progress bar with milestone overlays
+          LayoutBuilder(
+            builder: (ctx, box) {
+              final w = box.maxWidth;
+              return SizedBox(
+                height: 58,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      top: 14,
+                      left: 0,
+                      right: 0,
+                      height: 28,
+                      child: CustomPaint(
+                        painter: _VibeBarPainter(percent / 100),
+                      ),
+                    ),
+                    for (final s in _vibeStages) ...[
+                      Positioned(
+                        left: (w * s.p / 100 - 1).clamp(0.0, w - 2),
+                        top: 20,
+                        child: Container(
+                          width: 2,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: (s.p <= percent)
+                                ? Colors.white.withOpacity(0.7)
+                                : AppColors.ink.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: (w * s.p / 100 - 9).clamp(0.0, w - 18),
+                        top: 44,
+                        child: Text(s.emoji, style: const TextStyle(fontSize: 12)),
+                      ),
+                      if (s.gate)
+                        Positioned(
+                          left: (w * s.p / 100 - 30).clamp(0.0, w - 62),
+                          top: 2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.berry.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'FIRST DATE',
+                              style: AppTextStyles.mono(
+                                size: 7,
+                                weight: FontWeight.w700,
+                                color: AppColors.berry,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           // Helper text
@@ -605,7 +727,7 @@ class AnmTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    const items = [
       (icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Khám phá'),
       (icon: Icons.favorite_border, activeIcon: Icons.favorite, label: 'Wishlist'),
       (icon: Icons.chat_bubble_outline, activeIcon: Icons.chat_bubble, label: 'Chat'),
@@ -614,7 +736,7 @@ class AnmTabBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white,
         border: Border(top: BorderSide(color: AppColors.ink10, width: 0.5)),
       ),
       child: SafeArea(
@@ -625,34 +747,96 @@ class AnmTabBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (i) {
               final item = items[i];
-              final active = i == activeIndex;
-              return GestureDetector(
+              return _TabItem(
+                icon: item.icon,
+                activeIcon: item.activeIcon,
+                label: item.label,
+                active: i == activeIndex,
                 onTap: () => onTap?.call(i),
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: 72,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        active ? item.activeIcon : item.icon,
-                        color: active ? AppColors.berry : AppColors.ink50,
-                        size: 24,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.label,
-                        style: AppTextStyles.body(
-                          size: 11,
-                          weight: active ? FontWeight.w700 : FontWeight.w500,
-                          color: active ? AppColors.berry : AppColors.ink50,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               );
             }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatefulWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool active;
+  final VoidCallback? onTap;
+
+  const _TabItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.active,
+    this.onTap,
+  });
+
+  @override
+  State<_TabItem> createState() => _TabItemState();
+}
+
+class _TabItemState extends State<_TabItem> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.active
+        ? AppColors.berry
+        : _hovered
+            ? AppColors.berry.withOpacity(0.55)
+            : AppColors.ink50;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: _pressed ? 0.88 : _hovered ? 1.10 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            width: 72,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, anim) => ScaleTransition(
+                    scale: anim,
+                    child: child,
+                  ),
+                  child: Icon(
+                    widget.active ? widget.activeIcon : widget.icon,
+                    key: ValueKey(widget.active),
+                    color: color,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 160),
+                  style: AppTextStyles.body(
+                    size: 11,
+                    weight: widget.active ? FontWeight.w700 : FontWeight.w500,
+                    color: color,
+                  ),
+                  child: Text(widget.label),
+                ),
+              ],
+            ),
           ),
         ),
       ),
