@@ -158,3 +158,49 @@ func (m *Matching) Accept(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusCreated).JSON(models.SuccessEnvelope{Success: true, Data: match})
 }
+
+// Conversations returns all accepted matches for the caller with the latest message per match.
+func (m *Matching) Conversations(c *fiber.Ctx) error {
+	uid := middleware.UserID(c)
+	ctx, cancel := context.WithTimeout(c.UserContext(), 30*time.Second)
+	defer cancel()
+
+	const q = `
+		SELECT
+			mt.id AS match_id,
+			CASE WHEN mt.user_a_id = $1 THEN mt.user_b_id ELSE mt.user_a_id END AS partner_id,
+			u.name AS partner_name,
+			u.avatar_url,
+			last_msg.content,
+			last_msg.created_at AS last_message_at,
+			mt.score,
+			mt.created_at
+		FROM matches mt
+		JOIN users u ON u.id = CASE WHEN mt.user_a_id = $1 THEN mt.user_b_id ELSE mt.user_a_id END
+		LEFT JOIN LATERAL (
+			SELECT content, created_at FROM messages
+			WHERE match_id = mt.id
+			ORDER BY created_at DESC LIMIT 1
+		) last_msg ON true
+		WHERE mt.user_a_id = $1 OR mt.user_b_id = $1
+		ORDER BY COALESCE(last_msg.created_at, mt.created_at) DESC
+	`
+	rows, err := m.pool.Query(ctx, q, uid)
+	if err != nil {
+		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "query failed")
+	}
+	defer rows.Close()
+
+	out := make([]models.Conversation, 0, 16)
+	for rows.Next() {
+		var cv models.Conversation
+		if err := rows.Scan(
+			&cv.MatchID, &cv.PartnerID, &cv.PartnerName, &cv.PartnerAvatarURL,
+			&cv.LastMessage, &cv.LastMessageAt, &cv.Score, &cv.CreatedAt,
+		); err != nil {
+			return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "scan failed")
+		}
+		out = append(out, cv)
+	}
+	return models.OK(c, out)
+}

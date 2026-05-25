@@ -7,20 +7,22 @@ import (
 )
 
 type Config struct {
-	DatabaseURL       string
-	JWTSecret         []byte
-	JWTAccessExpire   time.Duration
-	JWTRefreshExpire  time.Duration
-	Port              string
-	Env               string
+	DatabaseURL        string
+	JWTSecret          []byte
+	JWTAccessExpire    time.Duration
+	JWTRefreshExpire   time.Duration
+	Port               string
+	Env                string
+	FirebaseWebAPIKey  string
 }
 
 func Load() (*Config, error) {
 	c := &Config{
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		JWTSecret:   []byte(os.Getenv("JWT_SECRET")),
-		Port:        getOr("PORT", "8080"),
-		Env:         getOr("ENV", "production"),
+		DatabaseURL:       os.Getenv("DATABASE_URL"),
+		JWTSecret:         []byte(os.Getenv("JWT_SECRET")),
+		Port:              getOr("PORT", "8080"),
+		Env:               getOr("ENV", "production"),
+		FirebaseWebAPIKey: os.Getenv("FIREBASE_WEB_API_KEY"),
 	}
 	if c.DatabaseURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is required")

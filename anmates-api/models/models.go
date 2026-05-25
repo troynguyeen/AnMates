@@ -8,11 +8,13 @@ import (
 
 type User struct {
 	ID           uuid.UUID `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
+	Email        *string   `json:"email,omitempty"`
+	PasswordHash *string   `json:"-"`
 	Name         string    `json:"name"`
 	AvatarURL    *string   `json:"avatar_url,omitempty"`
 	Bio          *string   `json:"bio,omitempty"`
+	Phone        *string   `json:"phone,omitempty"`
+	FirebaseUID  *string   `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -59,6 +61,18 @@ type MatchCandidate struct {
 	OverlapCount int       `json:"overlap_count"`
 	OverlapFoods []string  `json:"overlap_foods"`
 	Score        float64   `json:"score"`
+}
+
+// Conversation is what GET /api/conversations returns — accepted matches with partner info.
+type Conversation struct {
+	MatchID         uuid.UUID  `json:"match_id"`
+	PartnerID       uuid.UUID  `json:"partner_id"`
+	PartnerName     string     `json:"partner_name"`
+	PartnerAvatarURL *string   `json:"partner_avatar_url,omitempty"`
+	LastMessage     *string    `json:"last_message,omitempty"`
+	LastMessageAt   *time.Time `json:"last_message_at,omitempty"`
+	Score           float64    `json:"score"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 // Nồi Lẩu thresholds — index = level - 1 (level 1 starts at 0 points).

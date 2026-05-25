@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -18,8 +19,21 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
+func logLevel() slog.Level {
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel()}))
 	slog.SetDefault(log)
 
 	cfg, err := config.Load()
@@ -62,6 +76,15 @@ func main() {
 	})
 
 	app.Use(recover.New())
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+		if c.Method() == fiber.MethodOptions {
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+		return c.Next()
+	})
 	app.Use(middleware.RequestLogger(log))
 
 	rl := middleware.NewRateLimit(0.5, 5)
@@ -88,6 +111,7 @@ func main() {
 	// Auth (public).
 	api.Post("/auth/register", authH.Register)
 	api.Post("/auth/login", authH.Login)
+	api.Post("/auth/phone-verify", authH.PhoneVerify)
 	api.Post("/auth/refresh", authH.Refresh)
 	api.Post("/auth/logout", authH.Logout)
 
@@ -102,6 +126,7 @@ func main() {
 
 	auth.Get("/matches", matchH.List)
 	auth.Post("/matches/:id/accept", matchH.Accept)
+	auth.Get("/conversations", matchH.Conversations)
 	auth.Get("/matches/:id/messages", chatH.History)
 	auth.Get("/matches/:id/progress", noiH.Get)
 

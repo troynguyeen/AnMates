@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "492509819332",
+    "project_id": "anmates-studio",
+    "storage_bucket": "anmates-studio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:492509819332:android:8ed3f6ed617acc3f5b3491",
+        "android_client_info": {
+          "package_name": "com.anmates.anmates"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTOIYcAegIYKSnf01izV2WDzVVpWOjTco"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

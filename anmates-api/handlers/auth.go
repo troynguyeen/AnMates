@@ -1,11 +1,15 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"net/mail"
 	"strings"
 	"time"
@@ -43,6 +47,11 @@ type refreshReq struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type phoneVerifyReq struct {
+	FirebaseToken string `json:"firebase_token"`
+	Name          string `json:"name"`
+}
+
 type tokenResp struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
@@ -53,7 +62,8 @@ type tokenResp struct {
 type userOut struct {
 	ID        string  `json:"id"`
 	Name      string  `json:"name"`
-	Email     string  `json:"email"`
+	Email     *string `json:"email,omitempty"`
+	Phone     *string `json:"phone,omitempty"`
 	AvatarURL *string `json:"avatar_url"`
 	Bio       *string `json:"bio"`
 }
@@ -110,14 +120,96 @@ func (a *Auth) Login(c *fiber.Ctx) error {
 		SELECT id, email, password_hash, name, avatar_url, bio, created_at
 		FROM users WHERE email = $1
 	`, r.Email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.AvatarURL, &u.Bio, &u.CreatedAt)
-	if errors.Is(err, pgx.ErrNoRows) ||
-		(err == nil && bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(r.Password)) != nil) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return models.Err(c, fiber.StatusUnauthorized, models.ErrUnauthorized, "invalid credentials")
 	}
 	if err != nil {
 		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "login failed")
 	}
+	if u.PasswordHash == nil || bcrypt.CompareHashAndPassword([]byte(*u.PasswordHash), []byte(r.Password)) != nil {
+		return models.Err(c, fiber.StatusUnauthorized, models.ErrUnauthorized, "invalid credentials")
+	}
 	return a.issueTokens(c, ctx, &u, fiber.StatusOK)
+}
+
+// PhoneVerify verifies a Firebase ID token and upserts the phone user, then issues JWT.
+func (a *Auth) PhoneVerify(c *fiber.Ctx) error {
+	var r phoneVerifyReq
+	if err := c.BodyParser(&r); err != nil || r.FirebaseToken == "" {
+		return models.Err(c, fiber.StatusBadRequest, models.ErrValidation, "firebase_token required")
+	}
+	r.Name = strings.TrimSpace(r.Name)
+	if r.Name == "" {
+		r.Name = "Người dùng"
+	}
+
+	ctx, cancel := context.WithTimeout(c.UserContext(), 30*time.Second)
+	defer cancel()
+
+	uid, phone, err := a.verifyFirebaseToken(ctx, r.FirebaseToken)
+	if err != nil {
+		return models.Err(c, fiber.StatusUnauthorized, models.ErrUnauthorized, "invalid firebase token")
+	}
+	if phone == "" {
+		return models.Err(c, fiber.StatusBadRequest, models.ErrValidation, "firebase token has no phone number")
+	}
+
+	var u models.User
+	// Upsert: insert new phone user or return existing.
+	err = a.pool.QueryRow(ctx, `
+		INSERT INTO users (firebase_uid, phone, name)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (firebase_uid) DO UPDATE
+		  SET phone = EXCLUDED.phone
+		RETURNING id, name, email, phone, avatar_url, bio, created_at
+	`, uid, phone, r.Name).Scan(
+		&u.ID, &u.Name, &u.Email, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	if err != nil {
+		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "upsert user failed")
+	}
+
+	return a.issueTokens(c, ctx, &u, fiber.StatusOK)
+}
+
+func (a *Auth) verifyFirebaseToken(ctx context.Context, idToken string) (uid, phone string, err error) {
+	if a.cfg.FirebaseWebAPIKey == "" {
+		return "", "", fmt.Errorf("FIREBASE_WEB_API_KEY not configured")
+	}
+
+	body, _ := json.Marshal(map[string]string{"idToken": idToken})
+	url := "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + a.cfg.FirebaseWebAPIKey
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Users []struct {
+			LocalID     string `json:"localId"`
+			PhoneNumber string `json:"phoneNumber"`
+		} `json:"users"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", "", err
+	}
+	if result.Error != nil {
+		return "", "", fmt.Errorf("firebase: %s", result.Error.Message)
+	}
+	if len(result.Users) == 0 {
+		return "", "", fmt.Errorf("firebase: user not found")
+	}
+	return result.Users[0].LocalID, result.Users[0].PhoneNumber, nil
 }
 
 func (a *Auth) Refresh(c *fiber.Ctx) error {
@@ -132,11 +224,11 @@ func (a *Auth) Refresh(c *fiber.Ctx) error {
 
 	var u models.User
 	err := a.pool.QueryRow(ctx, `
-		SELECT u.id, u.email, u.name, u.avatar_url, u.bio, u.created_at
+		SELECT u.id, u.email, u.name, u.phone, u.avatar_url, u.bio, u.created_at
 		FROM refresh_tokens rt
 		JOIN users u ON u.id = rt.user_id
 		WHERE rt.token_hash = $1 AND rt.expires_at > now()
-	`, h).Scan(&u.ID, &u.Email, &u.Name, &u.AvatarURL, &u.Bio, &u.CreatedAt)
+	`, h).Scan(&u.ID, &u.Email, &u.Name, &u.Phone, &u.AvatarURL, &u.Bio, &u.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return models.Err(c, fiber.StatusUnauthorized, models.ErrUnauthorized, "invalid refresh token")
 	}
@@ -144,7 +236,6 @@ func (a *Auth) Refresh(c *fiber.Ctx) error {
 		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "refresh failed")
 	}
 
-	// Rotate: delete the used token before issuing a fresh pair.
 	if _, err := a.pool.Exec(ctx, `DELETE FROM refresh_tokens WHERE token_hash = $1`, h); err != nil {
 		return models.Err(c, fiber.StatusInternalServerError, models.ErrInternal, "rotate failed")
 	}
@@ -184,7 +275,8 @@ func (a *Auth) issueTokens(c *fiber.Ctx, ctx context.Context, u *models.User, st
 			RefreshToken: raw,
 			ExpiresAt:    exp,
 			User: &userOut{
-				ID: u.ID.String(), Name: u.Name, Email: u.Email,
+				ID: u.ID.String(), Name: u.Name,
+				Email: u.Email, Phone: u.Phone,
 				AvatarURL: u.AvatarURL, Bio: u.Bio,
 			},
 		},
