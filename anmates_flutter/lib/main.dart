@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'views/splash/splash_screen.dart';
-import 'views/main_tab_view.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -16,6 +19,7 @@ void main() async {
     ),
   );
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeNotifier(),
@@ -57,13 +61,13 @@ Widget _webFrameBuilder(BuildContext context, Widget? child) {
           borderRadius: BorderRadius.circular(44),
           boxShadow: [
             BoxShadow(
-              color: AppColors.berry.withOpacity(0.25),
+              color: AppColors.berry.withValues(alpha: 0.25),
               blurRadius: 80,
               spreadRadius: -10,
               offset: const Offset(0, 20),
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               blurRadius: 40,
               offset: const Offset(0, 10),
             ),
@@ -83,5 +87,3 @@ Widget _webFrameBuilder(BuildContext context, Widget? child) {
     ),
   );
 }
-
-

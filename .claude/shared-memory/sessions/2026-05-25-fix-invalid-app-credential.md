@@ -1,5 +1,7 @@
 # Session: Diagnose `INVALID_APP_CREDENTIAL` from Firebase Phone Auth
 
+> **Path migration note (2026-05-26):** This session predates the move from `.claude/agents/shared-memory/` to `.claude/shared-memory/`. Old paths below are historical — current canonical path is `.claude/shared-memory/`. See [../INSTRUCTIONS.md](../INSTRUCTIONS.md).
+
 **Date:** 2026-05-25
 **Type:** Bug investigation (no code change yet)
 **Operator:** team-leader (main assistant)

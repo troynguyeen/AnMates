@@ -72,6 +72,11 @@ class ApiClient {
     return prefs.getString('access_token');
   }
 
-  static String wsUrl(String matchId) =>
-      'ws://192.168.1.216:8080/ws/chat/$matchId';
+  // Derive WS scheme from the HTTP base so dev/prod and IP/domain all work.
+  static String wsUrl(String matchId) {
+    final wsBase = _baseUrl
+        .replaceFirst('https://', 'wss://')
+        .replaceFirst('http://', 'ws://');
+    return '$wsBase/ws/chat/$matchId';
+  }
 }

@@ -303,7 +303,7 @@ class _InputFieldState extends State<_InputField> {
           boxShadow: [
             if (_focused)
               BoxShadow(
-                color: AppColors.berry.withOpacity(0.12),
+                color: AppColors.berry.withValues(alpha: 0.12),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               )
@@ -420,7 +420,7 @@ class _SocialButton extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                 ),
                 child: Center(
                   child: Text(

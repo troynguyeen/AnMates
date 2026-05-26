@@ -1,0 +1,16 @@
+# Changelog
+
+Append-only event log. Every agent appends one row on finish.
+
+| Timestamp (UTC) | Agent | Action | Files touched |
+|-----------------|-------|--------|---------------|
+| 2026-05-25 | main-assistant (bootstrap) | initialize shared-memory directory | INDEX.md, current-task.md, plan.md, decisions.md, blockers.md, api-contracts.md, changelog.md |
+| 2026-05-25 | main-assistant (bootstrap) | create agent definitions | .claude/agents/team-leader.md, coder.md, qa.md |
+| 2026-05-25 | main-assistant (bootstrap) | write design spec | docs/superpowers/specs/2026-05-25-agent-team-design.md |
+| 2026-05-25 | main-assistant (bootstrap) | add sessions/ convention | sessions/2026-05-25-bootstrap.md, INDEX.md |
+| 2026-05-25 | main-assistant | write usage guide | USAGE.md, INDEX.md, sessions/2026-05-25-usage-guide.md |
+| 2026-05-25 22:50 | team-leader | diagnose INVALID_APP_CREDENTIAL Firebase Phone Auth; root cause = Firebase Console config (SHA Android / APNs iOS / authorized domains Web); raise BLOCKER-001 for user action | current-task.md, plan.md, blockers.md, sessions/2026-05-25-fix-invalid-app-credential.md |
+| 2026-05-25 23:25 | main-assistant | install gcloud CLI, generate debug keystore, register Android SHA-1/SHA-256 to Firebase, re-download google-services.json, audit phone OTP readiness via Identity Toolkit REST API (Blaze ✅, phone provider ✅, FCM ✅, VN-only SMS region ✅); iOS APNs/entitlements remain user manual | ~/.android/debug.keystore, android/app/google-services.json, sessions/2026-05-25-otp-real-phone-checklist.md |
+| 2026-05-26 | main-assistant | RESOLVE BLOCKER-001 (web): user added 127.0.0.1 to Firebase Authorized domains + accesses via http://127.0.0.1:PORT; refactor Flutter per Firebase docs (init in main, RecaptchaVerifier lifecycle, central error mapping, wsUrl from env); flutter analyze clean + build web ✅ | lib/main.dart, lib/views/auth/phone_input_view.dart, lib/views/auth/otp_view.dart, lib/views/auth/auth_error_messages.dart (new), lib/services/api_client.dart, pubspec.yaml, sessions/2026-05-26-firebase-phone-otp-resolved.md, current-task.md, blockers.md |
+| 2026-05-26 | main-assistant | introduce `resolutions/` folder (tag + error-keyword indexed, user-confirmed fixes only) + INSTRUCTIONS.md (full directory map + write protocols); promote Firebase phone OTP fix to R-001 | INSTRUCTIONS.md (new), resolutions/INDEX.md (new), resolutions/TEMPLATE.md (new), resolutions/R-001-firebase-phone-otp-web-127001.md (new), INDEX.md (updated), CLAUDE.md (updated) |
+| 2026-05-26 | main-assistant | user moved shared-memory from `.claude/agents/shared-memory/` → `.claude/shared-memory/`; created symlinks at project-root (`.claude/agents/` + `.claude/shared-memory/` → AnMatesApp) so canonical path `.claude/shared-memory/...` works from BOTH cwd=root and cwd=AnMatesApp; added project-root `CLAUDE.md` pointer; migrated all path refs in agent files + docs + auto-memory; added "Path migration note" to historical session files | /Users/thanhit/Downloads/AnMates/.claude/{agents,shared-memory} (symlinks), /Users/thanhit/Downloads/AnMates/CLAUDE.md (new), AnMatesApp/CLAUDE.md, AnMatesApp/.claude/agents/{team-leader,coder,qa}.md, INSTRUCTIONS.md, USAGE.md, sessions/2026-05-25-{bootstrap,fix-invalid-app-credential,usage-guide}.md, ~/.claude/projects/.../feedback_persist_session_outputs.md |

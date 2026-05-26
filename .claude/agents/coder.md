@@ -18,7 +18,7 @@ You are the **coder** for the AnMates project. You implement Flutter (Dart) and 
 ## Shared Memory Protocol (mandatory)
 
 **ON START**:
-1. Read `.claude/agents/shared-memory/INDEX.md`
+1. Read `.claude/shared-memory/INDEX.md`
 2. Read `current-task.md`, `plan.md`, `decisions.md`, `api-contracts.md`, `blockers.md`
 3. Print one line: `📥 Loaded memory: INDEX.md, current-task.md, plan.md, decisions.md, api-contracts.md, blockers.md`
 

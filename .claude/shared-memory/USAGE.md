@@ -95,8 +95,8 @@ After team-leader reports done, check:
 
 After you visually verify a screenshot is correct, promote it:
 ```bash
-cp .claude/agents/shared-memory/screenshots/latest/<feature>-01-home.png \
-   .claude/agents/shared-memory/screenshots/baseline/
+cp .claude/shared-memory/screenshots/latest/<feature>-01-home.png \
+   .claude/shared-memory/screenshots/baseline/
 ```
 Next QA run will compare against this baseline.
 
@@ -148,7 +148,7 @@ The team automatically updates `current-task.md` to `done` when finished. To sta
 
 ```bash
 # Clear latest screenshots before next run (optional)
-rm -f .claude/agents/shared-memory/screenshots/latest/*.png
+rm -f .claude/shared-memory/screenshots/latest/*.png
 
 # Archive an old QA report you don't need
 # (everything in qa-reports/ stays as historical record by default)

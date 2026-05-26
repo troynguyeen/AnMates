@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../firebase_options.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/anm_logo.dart';
 import '../../widgets/anm_widgets.dart';
+import 'auth_error_messages.dart';
 import 'otp_view.dart';
 
 // Dev bypass — must match backend DEV_BYPASS_SECRET. Override via:
@@ -18,16 +18,9 @@ const _devBypassSecret =
 const _devTestPhone = '+84999000001';
 const _devTestName = 'Dev User';
 
-bool _firebaseReady = false;
-
-Future<void> _ensureFirebase() async {
-  if (!_firebaseReady) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    _firebaseReady = true;
-  }
-}
+// Must match the <div id="..."> in web/index.html.
+const _recaptchaContainerId = 'recaptcha-container';
+const _otpRequestTimeout = Duration(seconds: 90);
 
 class PhoneInputView extends StatefulWidget {
   final VoidCallback onAuthenticated;
@@ -42,35 +35,58 @@ class _PhoneInputViewState extends State<PhoneInputView> {
   final _nameCtrl = TextEditingController();
   bool _loading = false;
 
+  /// Web-only. Per Firebase docs, the verifier must be re-created on retry —
+  /// we hold a reference so we can `clear()` it on dispose to release the
+  /// DOM widget.
+  RecaptchaVerifier? _recaptchaVerifier;
+
   @override
   void dispose() {
     _phoneCtrl.dispose();
     _nameCtrl.dispose();
+    _clearVerifier();
     super.dispose();
+  }
+
+  void _clearVerifier() {
+    _recaptchaVerifier?.clear();
+    _recaptchaVerifier = null;
+  }
+
+  RecaptchaVerifier _buildVerifier() {
+    return RecaptchaVerifier(
+      auth: FirebaseAuthPlatform.instance,
+      container: _recaptchaContainerId,
+      size: RecaptchaVerifierSize.normal,
+      theme: RecaptchaVerifierTheme.light,
+      onError: (FirebaseAuthException e) {
+        if (!mounted) return;
+        _showError(friendlyPhoneAuthError(e.code));
+        setState(() => _loading = false);
+      },
+      onExpired: () {
+        if (!mounted) return;
+        _clearVerifier();
+        _showError('reCAPTCHA đã hết hạn. Thử lại.');
+        setState(() => _loading = false);
+      },
+    );
   }
 
   bool get _canSubmit =>
       _phoneCtrl.text.trim().length >= 9 && _nameCtrl.text.trim().isNotEmpty;
 
   String _normalizePhone(String raw) {
-    raw = raw.replaceAll(RegExp(r'\s+'), '');
-    if (raw.startsWith('0')) return '+84${raw.substring(1)}';
-    if (raw.startsWith('+')) return raw;
-    return '+84$raw';
+    final cleaned = raw.replaceAll(RegExp(r'\s+'), '');
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.startsWith('0')) return '+84${cleaned.substring(1)}';
+    return '+84$cleaned';
   }
 
   Future<void> _sendOtp() async {
     if (!_canSubmit || _loading) return;
     setState(() => _loading = true);
     final phone = _normalizePhone(_phoneCtrl.text.trim());
-    try {
-      await _ensureFirebase();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loading = false);
-      _showError('Firebase: ${e.runtimeType}: $e');
-      return;
-    }
     if (kIsWeb) {
       await _sendOtpWeb(phone);
     } else {
@@ -78,50 +94,53 @@ class _PhoneInputViewState extends State<PhoneInputView> {
     }
   }
 
-  // ── Web flow: explicit RecaptchaVerifier bound to #recaptcha-container ────
+  // ── Web flow ───────────────────────────────────────────────────────────────
+  // https://firebase.google.com/docs/auth/flutter/phone-auth#web
   Future<void> _sendOtpWeb(String phone) async {
+    _clearVerifier();
+    _recaptchaVerifier = _buildVerifier();
     try {
-      final verifier = RecaptchaVerifier(
-        auth: FirebaseAuthPlatform.instance,
-        container: 'recaptcha-container',
-        size: RecaptchaVerifierSize.normal,
-        theme: RecaptchaVerifierTheme.light,
-      );
-      final confirmationResult =
-          await FirebaseAuth.instance.signInWithPhoneNumber(phone, verifier);
+      final result = await FirebaseAuth.instance
+          .signInWithPhoneNumber(phone, _recaptchaVerifier!);
       if (!mounted) return;
       setState(() => _loading = false);
-      _goToOtp(phone, verificationId: '', confirmationResult: confirmationResult);
+      _goToOtp(phone, confirmationResult: result);
     } on FirebaseAuthException catch (e) {
+      _clearVerifier();
       if (!mounted) return;
       setState(() => _loading = false);
-      _showError('${e.code}: ${e.message ?? _friendlyError(e.code)}');
+      _showError(friendlyPhoneAuthError(e.code));
     } catch (e) {
+      _clearVerifier();
       if (!mounted) return;
       setState(() => _loading = false);
-      _showError('Lỗi: ${e.toString().replaceFirst('Exception: ', '')}');
+      _showError(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
-  // ── Mobile flow: verifyPhoneNumber → verificationId ───────────────────────
+  // ── Mobile flow ────────────────────────────────────────────────────────────
+  // https://firebase.google.com/docs/auth/flutter/phone-auth#mobile
   Future<void> _sendOtpMobile(String phone) async {
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: phone,
-      timeout: const Duration(seconds: 90),
+      timeout: _otpRequestTimeout,
       verificationCompleted: (PhoneAuthCredential credential) async {
+        // Android instant-verification path: sign in without typing OTP.
         try {
           final uc =
               await FirebaseAuth.instance.signInWithCredential(credential);
           final idToken = await uc.user?.getIdToken();
           if (idToken != null && mounted) {
-            _goToOtp(phone, verificationId: '', autoIdToken: idToken);
+            _goToOtp(phone, autoIdToken: idToken);
           }
-        } catch (_) {}
+        } catch (_) {
+          // Fall through to manual OTP entry.
+        }
       },
       verificationFailed: (FirebaseAuthException e) {
         if (!mounted) return;
         setState(() => _loading = false);
-        _showError(_friendlyError(e.code));
+        _showError(friendlyPhoneAuthError(e.code));
       },
       codeSent: (String verificationId, int? resendToken) {
         if (!mounted) return;
@@ -132,16 +151,18 @@ class _PhoneInputViewState extends State<PhoneInputView> {
     );
   }
 
-  void _goToOtp(String phone,
-      {required String verificationId,
-      String? autoIdToken,
-      ConfirmationResult? confirmationResult}) {
+  void _goToOtp(
+    String phone, {
+    String? verificationId,
+    String? autoIdToken,
+    ConfirmationResult? confirmationResult,
+  }) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OtpView(
           phone: phone,
           name: _nameCtrl.text.trim(),
-          verificationId: verificationId,
+          verificationId: verificationId ?? '',
           autoIdToken: autoIdToken,
           confirmationResult: confirmationResult,
           onVerified: widget.onAuthenticated,
@@ -178,19 +199,6 @@ class _PhoneInputViewState extends State<PhoneInputView> {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
-  }
-
-  String _friendlyError(String code) {
-    switch (code) {
-      case 'invalid-phone-number':
-        return 'Số điện thoại không hợp lệ.';
-      case 'too-many-requests':
-        return 'Quá nhiều yêu cầu. Thử lại sau vài phút.';
-      case 'quota-exceeded':
-        return 'Hạn mức SMS đã hết. Liên hệ hỗ trợ.';
-      default:
-        return 'Không gửi được OTP ($code).';
-    }
   }
 
   @override
@@ -294,20 +302,26 @@ class _DevModeButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.amber.shade50,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: orange.withOpacity(0.55), width: 1.2),
+              border: Border.all(
+                color: orange.withValues(alpha: 0.55),
+                width: 1.2,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.bug_report_outlined,
-                    size: 18, color: orange.withOpacity(loading ? 0.5 : 1)),
+                Icon(
+                  Icons.bug_report_outlined,
+                  size: 18,
+                  color: orange.withValues(alpha: loading ? 0.5 : 1.0),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   loading ? 'Đang đăng nhập dev…' : 'Dev Mode (skip OTP)',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: orange.withOpacity(loading ? 0.5 : 1),
+                    color: orange.withValues(alpha: loading ? 0.5 : 1.0),
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -348,15 +362,16 @@ class _PhoneFieldState extends State<_PhoneField> {
           boxShadow: [
             if (_focused)
               BoxShadow(
-                color: AppColors.berry.withOpacity(0.12),
+                color: AppColors.berry.withValues(alpha: 0.12),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               )
             else
               const BoxShadow(
-                  color: AppColors.ink10,
-                  blurRadius: 6,
-                  offset: Offset(0, 2)),
+                color: AppColors.ink10,
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
           ],
         ),
         child: Row(
@@ -441,15 +456,16 @@ class _InputFieldState extends State<_InputField> {
           boxShadow: [
             if (_focused)
               BoxShadow(
-                color: AppColors.berry.withOpacity(0.12),
+                color: AppColors.berry.withValues(alpha: 0.12),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               )
             else
               const BoxShadow(
-                  color: AppColors.ink10,
-                  blurRadius: 6,
-                  offset: Offset(0, 2)),
+                color: AppColors.ink10,
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
           ],
         ),
         child: Row(
@@ -474,8 +490,7 @@ class _InputFieldState extends State<_InputField> {
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 18),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 18),
                 ),
               ),
             ),

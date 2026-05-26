@@ -1,0 +1,182 @@
+# Shared Memory — Instructions & Directory Structure
+
+This is the **single source of truth** for AnMates project memory. Every Claude session (main assistant + sub-agents) reads from here on start and writes back on finish.
+
+If you only read one file, read **this one** — it explains the entire layout and how to use it.
+
+---
+
+## Access from Anywhere
+
+**Canonical physical location:** `AnMatesApp/.claude/shared-memory/`
+
+**Access path that works regardless of cwd:** `.claude/shared-memory/`
+
+```
+/Users/thanhit/Downloads/AnMates/
+├── .claude/                            ← Top-level .claude (cwd = project root)
+│   ├── agents/         → symlink ─┐    (resolves to AnMatesApp/.claude/agents)
+│   └── shared-memory/  → symlink ─┼─┐  (resolves to AnMatesApp/.claude/shared-memory)
+│                                  │ │
+└── AnMatesApp/                     │ │
+    ├── CLAUDE.md                   │ │  ← Auto-loaded when cwd ∈ AnMatesApp tree
+    └── .claude/                    │ │
+        ├── agents/  ◀──────────────┘ │  ← Real agent definitions
+        └── shared-memory/  ◀─────────┘  ← Real shared memory (this directory)
+```
+
+This means **the same path `.claude/shared-memory/...` works from BOTH** project root cwd AND `AnMatesApp/` cwd. Agent files, CLAUDE.md, INSTRUCTIONS.md all use this single relative path.
+
+| Entry point | Resolves via |
+|-------------|--------------|
+| CLI from project root | Symlinks at `/Users/thanhit/Downloads/AnMates/.claude/` |
+| CLI from `AnMatesApp/` | Direct (real files) |
+| VS Code extension (project root) | Symlinks |
+| VS Code extension (AnMatesApp) | Direct |
+| `@.claude/agents/team-leader.md` invocation | Works either way |
+
+---
+
+## Directory Structure
+
+```
+.claude/shared-memory/
+├── INSTRUCTIONS.md         ← THIS FILE — read first
+├── INDEX.md                ← Agent-team file map + read-order per role
+├── USAGE.md                ← How to dispatch the agent team (team-leader/coder/qa)
+│
+├── current-task.md         ← Active task: goal, status, owner, started_at
+├── plan.md                 ← Step-by-step plan for current task
+├── decisions.md            ← Architectural decisions log (ADR-style)
+├── blockers.md             ← Open blockers needing user/team-leader attention
+├── changelog.md            ← Append-only event log; every agent writes one row on finish
+├── api-contracts.md        ← Go API endpoint schemas (coder writes, qa reads)
+│
+├── resolutions/            ← CONFIRMED solutions (user-verified) — Claude's primary lookup
+│   ├── INDEX.md            ← Tag/error-keyword query index — read THIS to find a solution
+│   ├── TEMPLATE.md         ← Frontmatter template for new resolutions
+│   └── R-NNN-<slug>.md     ← One file per confirmed resolution
+│
+├── sessions/               ← Chronological session logs (may include diagnostic-only work)
+│   └── YYYY-MM-DD-<slug>.md
+│
+├── qa-reports/             ← Per-run QA reports (test + screenshots + regressions)
+│   └── YYYY-MM-DD-<feature>.md
+│
+└── screenshots/
+    ├── baseline/           ← Approved visual-regression baselines (qa)
+    └── latest/             ← Most recent screenshots from current run (qa)
+```
+
+---
+
+## How Claude uses this directory
+
+### ON START of every session (BEFORE responding to user)
+
+```
+1. Read INSTRUCTIONS.md (this file)
+2. Read current-task.md   — what's active
+3. Read blockers.md        — known open issues
+4. Read tail ~20 lines of changelog.md — recent activity
+5. Skim resolutions/INDEX.md tags + error-keywords
+   → if user's question matches a tag/error → read the full R-NNN file
+6. Announce: "📥 Loaded shared-memory: <files-read>, resolutions matched: <R-NNN or none>"
+```
+
+**Why this order:** resolutions are the highest-signal context — solved problems with verified fixes. Always check them before re-investigating.
+
+### ON FINISH of a session that resolves an issue
+
+Two write paths depending on confidence:
+
+| Confidence | Write to |
+|------------|----------|
+| User explicitly confirmed "it works" / "done" / "ok ngon" | **`resolutions/R-NNN-<slug>.md`** + session log + index |
+| Work done but not yet user-verified | `sessions/YYYY-MM-DD-<slug>.md` only (move to `resolutions/` later when confirmed) |
+
+**Resolution write protocol:**
+1. Pick next free `R-NNN` (zero-padded 3 digits) from `resolutions/INDEX.md`.
+2. Copy `resolutions/TEMPLATE.md` → `resolutions/R-NNN-<short-kebab-slug>.md`.
+3. Fill in frontmatter (tags, platforms, severity, date, confirmed_by) and all template sections.
+4. Append new row to `resolutions/INDEX.md` **Resolutions Table**.
+5. Add Error-keyword mapping if user's error string is grep-able.
+6. Re-use existing tags from `resolutions/INDEX.md` Tag glossary; only add new tags if essential.
+7. Append row to `changelog.md` mentioning the new resolution ID.
+8. If a blocker was resolved → update `blockers.md` (Status → resolved, link R-NNN).
+9. If `current-task.md` was the issue → update Status to `done`, link R-NNN.
+
+### ON FINISH of any other session producing deliverables
+
+Just write a `sessions/YYYY-MM-DD-<slug>.md` log + append `changelog.md` row. No resolution entry until confirmed.
+
+---
+
+## File ownership
+
+| File / Dir | Primary writers | Readers |
+|------------|----------------|---------|
+| `INSTRUCTIONS.md` (this) | main assistant (when conventions evolve) | all |
+| `INDEX.md` | bootstrap; rarely changed | all (on start) |
+| `current-task.md` | team-leader, main assistant | all |
+| `plan.md` | team-leader | coder, qa |
+| `decisions.md` | team-leader, main assistant | all |
+| `blockers.md` | coder, qa raise; team-leader resolves | all |
+| `changelog.md` | **all agents** (append-only on finish) | all |
+| `api-contracts.md` | coder (when endpoints change) | qa |
+| `resolutions/` | main assistant (only after user confirmation) | all (lookup on start) |
+| `sessions/` | main assistant (chronological log) | human review; rarely read by agents |
+| `qa-reports/` | qa | team-leader, human review |
+| `screenshots/` | qa | qa (compares latest vs baseline) |
+
+---
+
+## Resolutions vs Sessions — what goes where?
+
+| Aspect | `resolutions/` | `sessions/` |
+|--------|---------------|-------------|
+| Trigger | User explicitly confirmed fix works | Any session producing deliverables |
+| Lifecycle | Permanent reference | Time-stamped journal |
+| Naming | `R-NNN-<slug>.md` (sequential ID) | `YYYY-MM-DD-<slug>.md` (date) |
+| Structure | Strict template (frontmatter + standard sections) | Free-form session log |
+| Indexed | Yes — by tag, error keyword, platform | No — browse by date |
+| Read on start | **Yes — primary lookup** | Only if topic matches by filename |
+| Purpose | "If this problem recurs, here is the verified fix" | "What happened on this day" |
+
+**Rule of thumb:** if Claude future-self might be asked the same question again, the answer belongs in `resolutions/`. Diagnostic notes, planning, exploration → `sessions/`.
+
+---
+
+## Query patterns Claude should use
+
+When user describes a problem, scan in this order:
+
+1. **Exact error string** — search `resolutions/INDEX.md` "Error keywords" section
+2. **Tag match** — match keywords in user's question against Tag column
+3. **Platform filter** — narrow to relevant platform if mentioned (web / android / ios / backend)
+4. **Severity sort** — blockers first; address them before nice-to-haves
+5. **Read full R-NNN file** — DON'T propose a new fix without reading the existing one first
+6. **Adapt if needed** — if symptoms match 90% but not exactly, reference the existing resolution and explain the variant
+
+If no resolution matches, fall back to:
+- `decisions.md` (architectural constraints in effect)
+- `sessions/` (browse recent dates for similar topics)
+- General investigation (then write a new resolution after user confirms)
+
+---
+
+## Quick reference card
+
+```
+NEED CONTEXT?         → resolutions/INDEX.md (tags + error keywords)
+WHAT'S ACTIVE?        → current-task.md
+WHAT'S STUCK?         → blockers.md
+WHAT JUST HAPPENED?   → changelog.md (tail)
+WHAT'S DECIDED?       → decisions.md
+HOW DO I DISPATCH?    → USAGE.md (agent team docs)
+
+DONE A FIX?
+  USER CONFIRMED?     → write resolutions/R-NNN + update INDEX + changelog
+  NOT YET CONFIRMED?  → write sessions/YYYY-MM-DD + update changelog
+  RESOLVED BLOCKER?   → update blockers.md status → resolved
+```

@@ -1,17 +1,23 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/anm_widgets.dart';
+import 'auth_error_messages.dart';
+
+const _otpLength = 6;
+const _resendTimeout = Duration(seconds: 90);
+const _recaptchaContainerId = 'recaptcha-container';
 
 class OtpView extends StatefulWidget {
   final String phone;
   final String name;
-  final String verificationId;       // mobile only
-  final String? autoIdToken;         // Android auto-verify
+  final String verificationId; // mobile only
+  final String? autoIdToken; // Android auto-verify
   final ConfirmationResult? confirmationResult; // web only
   final VoidCallback onVerified;
 
@@ -30,16 +36,19 @@ class OtpView extends StatefulWidget {
 }
 
 class _OtpViewState extends State<OtpView> {
-  final List<String> _digits = ['', '', '', '', '', ''];
+  final List<String> _digits = List.filled(_otpLength, '');
   bool _loading = false;
-  int _secondsLeft = 90;
+  int _secondsLeft = _resendTimeout.inSeconds;
   Timer? _timer;
+
+  /// Web-only: held so we can `clear()` it on dispose.
+  RecaptchaVerifier? _resendVerifier;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Nếu Android auto-verify xong trước khi vào màn này
+    // Android instant-verify finished before this view mounted.
     if (widget.autoIdToken != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _verifyWithBackend(widget.autoIdToken!);
@@ -50,14 +59,18 @@ class _OtpViewState extends State<OtpView> {
   @override
   void dispose() {
     _timer?.cancel();
+    _resendVerifier?.clear();
     super.dispose();
   }
 
   void _startTimer() {
     _timer?.cancel();
-    setState(() => _secondsLeft = 90);
+    setState(() => _secondsLeft = _resendTimeout.inSeconds);
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
       setState(() {
         if (_secondsLeft > 0) {
           _secondsLeft--;
@@ -73,11 +86,17 @@ class _OtpViewState extends State<OtpView> {
     setState(() {
       if (key == '⌫') {
         for (int i = _digits.length - 1; i >= 0; i--) {
-          if (_digits[i].isNotEmpty) { _digits[i] = ''; break; }
+          if (_digits[i].isNotEmpty) {
+            _digits[i] = '';
+            break;
+          }
         }
       } else {
         for (int i = 0; i < _digits.length; i++) {
-          if (_digits[i].isEmpty) { _digits[i] = key; break; }
+          if (_digits[i].isEmpty) {
+            _digits[i] = key;
+            break;
+          }
         }
       }
     });
@@ -87,15 +106,19 @@ class _OtpViewState extends State<OtpView> {
     }
   }
 
+  void _clearDigits() {
+    for (int i = 0; i < _digits.length; i++) {
+      _digits[i] = '';
+    }
+  }
+
   Future<void> _submitOtp(String code) async {
     setState(() => _loading = true);
     try {
-      UserCredential uc;
+      final UserCredential uc;
       if (kIsWeb && widget.confirmationResult != null) {
-        // Web: dùng ConfirmationResult từ signInWithPhoneNumber
         uc = await widget.confirmationResult!.confirm(code);
       } else {
-        // Mobile: dùng PhoneAuthCredential
         final credential = PhoneAuthProvider.credential(
           verificationId: widget.verificationId,
           smsCode: code,
@@ -106,17 +129,9 @@ class _OtpViewState extends State<OtpView> {
       if (idToken == null) throw Exception('Không lấy được Firebase token');
       await _verifyWithBackend(idToken);
     } on FirebaseAuthException catch (e) {
-      _showError(_friendlyError(e.code));
-      setState(() {
-        _loading = false;
-        for (int i = 0; i < _digits.length; i++) _digits[i] = '';
-      });
+      _resetOnError(friendlyPhoneAuthError(e.code));
     } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
-      setState(() {
-        _loading = false;
-        for (int i = 0; i < _digits.length; i++) _digits[i] = '';
-      });
+      _resetOnError(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -126,48 +141,57 @@ class _OtpViewState extends State<OtpView> {
       if (mounted) widget.onVerified();
     } catch (e) {
       if (!mounted) return;
-      _showError(e.toString().replaceFirst('Exception: ', ''));
-      setState(() {
-        _loading = false;
-        for (int i = 0; i < _digits.length; i++) _digits[i] = '';
-      });
+      _resetOnError(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
+  void _resetOnError(String msg) {
+    if (!mounted) return;
+    _showError(msg);
+    setState(() {
+      _loading = false;
+      _clearDigits();
+    });
+  }
+
+  // ── Resend ─────────────────────────────────────────────────────────────────
   Future<void> _resend() async {
     if (_secondsLeft > 0 || _loading) return;
     setState(() => _loading = true);
-
     if (kIsWeb) {
-      // Web: gọi lại signInWithPhoneNumber
-      try {
-        final newResult =
-            await FirebaseAuth.instance.signInWithPhoneNumber(widget.phone);
-        if (!mounted) return;
-        setState(() => _loading = false);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => OtpView(
-              phone: widget.phone,
-              name: widget.name,
-              verificationId: '',
-              confirmationResult: newResult,
-              onVerified: widget.onVerified,
-            ),
-          ),
-        );
-      } on FirebaseAuthException catch (e) {
-        if (!mounted) return;
-        setState(() => _loading = false);
-        _showError(_friendlyError(e.code));
-      }
-      return;
+      await _resendWeb();
+    } else {
+      await _resendMobile();
     }
+  }
 
-    // Mobile
+  Future<void> _resendWeb() async {
+    _resendVerifier?.clear();
+    _resendVerifier = RecaptchaVerifier(
+      auth: FirebaseAuthPlatform.instance,
+      container: _recaptchaContainerId,
+      size: RecaptchaVerifierSize.normal,
+      theme: RecaptchaVerifierTheme.light,
+    );
+    try {
+      final newResult = await FirebaseAuth.instance
+          .signInWithPhoneNumber(widget.phone, _resendVerifier!);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _replaceWith(confirmationResult: newResult);
+    } on FirebaseAuthException catch (e) {
+      _resendVerifier?.clear();
+      _resendVerifier = null;
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _showError(friendlyPhoneAuthError(e.code));
+    }
+  }
+
+  Future<void> _resendMobile() async {
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: widget.phone,
-      timeout: const Duration(seconds: 90),
+      timeout: _resendTimeout,
       verificationCompleted: (credential) async {
         final uc = await FirebaseAuth.instance.signInWithCredential(credential);
         final idToken = await uc.user?.getIdToken();
@@ -176,23 +200,31 @@ class _OtpViewState extends State<OtpView> {
       verificationFailed: (e) {
         if (!mounted) return;
         setState(() => _loading = false);
-        _showError(_friendlyError(e.code));
+        _showError(friendlyPhoneAuthError(e.code));
       },
       codeSent: (newVerificationId, _) {
         if (!mounted) return;
         setState(() => _loading = false);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => OtpView(
-              phone: widget.phone,
-              name: widget.name,
-              verificationId: newVerificationId,
-              onVerified: widget.onVerified,
-            ),
-          ),
-        );
+        _replaceWith(verificationId: newVerificationId);
       },
       codeAutoRetrievalTimeout: (_) {},
+    );
+  }
+
+  void _replaceWith({
+    String? verificationId,
+    ConfirmationResult? confirmationResult,
+  }) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => OtpView(
+          phone: widget.phone,
+          name: widget.name,
+          verificationId: verificationId ?? '',
+          confirmationResult: confirmationResult,
+          onVerified: widget.onVerified,
+        ),
+      ),
     );
   }
 
@@ -204,17 +236,6 @@ class _OtpViewState extends State<OtpView> {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
-  }
-
-  String _friendlyError(String code) {
-    switch (code) {
-      case 'invalid-verification-code':
-        return 'Mã OTP không đúng. Thử lại.';
-      case 'session-expired':
-        return 'Mã OTP đã hết hạn. Gửi lại.';
-      default:
-        return 'Lỗi xác thực ($code).';
-    }
   }
 
   int get _activeIndex => _digits.indexWhere((d) => d.isEmpty);
@@ -233,7 +254,6 @@ class _OtpViewState extends State<OtpView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Back button
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: GestureDetector(
@@ -244,11 +264,12 @@ class _OtpViewState extends State<OtpView> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                          color: AppColors.ink10,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2))
+                        color: AppColors.ink10,
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: const Icon(Icons.arrow_back,
@@ -257,7 +278,6 @@ class _OtpViewState extends State<OtpView> {
               ),
             ),
             const SizedBox(height: 24),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
@@ -274,25 +294,21 @@ class _OtpViewState extends State<OtpView> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // OTP digit boxes
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(
-                  6,
+                  _otpLength,
                   (i) => _OtpBox(
                     digit: _digits[i],
                     isActive: !_loading && i == _activeIndex,
-                    isLoading: _loading && i < 6,
+                    isLoading: _loading,
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
-
-            // Resend
             Center(
               child: GestureDetector(
                 onTap: _secondsLeft == 0 ? _resend : null,
@@ -325,9 +341,7 @@ class _OtpViewState extends State<OtpView> {
                 ),
               ),
             ),
-
             const Spacer(),
-
             if (_loading)
               const Center(
                 child: Padding(
@@ -352,8 +366,11 @@ class _OtpBox extends StatelessWidget {
   final bool isActive;
   final bool isLoading;
 
-  const _OtpBox(
-      {required this.digit, required this.isActive, this.isLoading = false});
+  const _OtpBox({
+    required this.digit,
+    required this.isActive,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +383,7 @@ class _OtpBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isLoading
-              ? AppColors.berry.withOpacity(0.4)
+              ? AppColors.berry.withValues(alpha: 0.4)
               : isActive
                   ? AppColors.berry
                   : AppColors.ink10,
@@ -375,17 +392,18 @@ class _OtpBox extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: AppColors.berry.withOpacity(0.22),
+                  color: AppColors.berry.withValues(alpha: 0.22),
                   blurRadius: 12,
                   spreadRadius: 2,
                   offset: const Offset(0, 3),
                 ),
               ]
-            : [
+            : const [
                 BoxShadow(
-                    color: AppColors.ink10,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2)),
+                  color: AppColors.ink10,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
               ],
       ),
       child: Center(
@@ -473,18 +491,21 @@ class _KeyButtonState extends State<_KeyButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 80),
         decoration: BoxDecoration(
-          color: _pressed ? AppColors.berry.withOpacity(0.08) : Colors.white,
+          color: _pressed
+              ? AppColors.berry.withValues(alpha: 0.08)
+              : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-                color: AppColors.ink10,
-                blurRadius: 4,
-                offset: const Offset(0, 2))
+              color: AppColors.ink10,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Center(
           child: isBackspace
-              ? Icon(Icons.backspace_outlined,
+              ? const Icon(Icons.backspace_outlined,
                   size: 22, color: AppColors.ink70)
               : Text(
                   widget.keyLabel,
