@@ -8,32 +8,32 @@ If you only read one file, read **this one** — it explains the entire layout a
 
 ## Access from Anywhere
 
-**Canonical physical location:** `AnMatesApp/.claude/shared-memory/`
+**Canonical physical location:** `c:\AnM\AnMates\.claude\shared-memory\`
 
 **Access path that works regardless of cwd:** `.claude/shared-memory/`
 
 ```
-/Users/thanhit/Downloads/AnMates/
-├── .claude/                            ← Top-level .claude (cwd = project root)
-│   ├── agents/         → symlink ─┐    (resolves to AnMatesApp/.claude/agents)
-│   └── shared-memory/  → symlink ─┼─┐  (resolves to AnMatesApp/.claude/shared-memory)
-│                                  │ │
-└── AnMatesApp/                     │ │
-    ├── CLAUDE.md                   │ │  ← Auto-loaded when cwd ∈ AnMatesApp tree
-    └── .claude/                    │ │
-        ├── agents/  ◀──────────────┘ │  ← Real agent definitions
-        └── shared-memory/  ◀─────────┘  ← Real shared memory (this directory)
+c:\AnM\AnMates\                          ← Project root (cwd)
+├── .claude/
+│   ├── agents/                          ← Real agent definitions (team-leader, coder, qa)
+│   │   ├── team-leader.md
+│   │   ├── coder.md
+│   │   └── qa.md
+│   └── shared-memory/                   ← THIS DIRECTORY — all memory (static + runtime)
+│       ├── INDEX.md, INSTRUCTIONS.md, KNOWLEDGE-INDEX.md, USAGE.md, ORCHESTRATION-README.md
+│       ├── product-summary.md, architecture-overview.md, design-system.md, ... (static)
+│       ├── current-task.md, plan.md, decisions.md, ... (runtime)
+│       ├── resolutions/, sessions/, qa-reports/, screenshots/
+│       └── (no nested .claude — single source of truth)
+└── plan/                                ← Handoff doc lives here
+    └── lastest/handoff/anmate-design-handoff.md
 ```
 
-This means **the same path `.claude/shared-memory/...` works from BOTH** project root cwd AND `AnMatesApp/` cwd. Agent files, CLAUDE.md, INSTRUCTIONS.md all use this single relative path.
-
-| Entry point | Resolves via |
-|-------------|--------------|
-| CLI from project root | Symlinks at `/Users/thanhit/Downloads/AnMates/.claude/` |
-| CLI from `AnMatesApp/` | Direct (real files) |
-| VS Code extension (project root) | Symlinks |
-| VS Code extension (AnMatesApp) | Direct |
-| `@.claude/agents/team-leader.md` invocation | Works either way |
+| Entry point | Path |
+|-------------|------|
+| CLI from project root (`c:\AnM\AnMates`) | `.claude/shared-memory/` |
+| VS Code extension (project root) | `.claude/shared-memory/` |
+| `@.claude/agents/team-leader.md` invocation | Works from project root |
 
 ---
 
@@ -41,32 +41,54 @@ This means **the same path `.claude/shared-memory/...` works from BOTH** project
 
 ```
 .claude/shared-memory/
-├── INSTRUCTIONS.md         ← THIS FILE — read first
-├── INDEX.md                ← Agent-team file map + read-order per role
-├── USAGE.md                ← How to dispatch the agent team (team-leader/coder/qa)
+├── INSTRUCTIONS.md             ← THIS FILE — read first
+├── INDEX.md                    ← Operational file map + read-order per role
+├── KNOWLEDGE-INDEX.md          ← Navigation map for static-knowledge files
+├── USAGE.md                    ← How to dispatch the agent team (team-leader/coder/qa)
+├── ORCHESTRATION-README.md     ← Multi-agent system architecture + governance
 │
-├── current-task.md         ← Active task: goal, status, owner, started_at
-├── plan.md                 ← Step-by-step plan for current task
-├── decisions.md            ← Architectural decisions log (ADR-style)
-├── blockers.md             ← Open blockers needing user/team-leader attention
-├── changelog.md            ← Append-only event log; every agent writes one row on finish
-├── api-contracts.md        ← Go API endpoint schemas (coder writes, qa reads)
+│   # ───── Static knowledge (Phase 1, read-only for agents) ─────
+├── product-summary.md          ← "Ultimate-for-all" strategy, KPIs, scope in/out
+├── architecture-overview.md    ← System design, data model, module layout, jobs
+├── api-contracts-summary.md    ← CANONICAL Phase 1 REST + WS endpoint catalog
+├── domain-glossary.md          ← Mate, Best Mate, Kèo, Lá thư, Vibe, Trust terminology
+├── design-system.md            ← FINAL color tokens, typography, conformance criteria
+├── design-reference-index.md   ← Screen → reference HTML file map
+├── shared-decisions.md         ← 15 LOCKED Phase 1 architecture decisions
+├── task-board.md               ← W1–W8 task scaffold (~160 tasks)
 │
-├── resolutions/            ← CONFIRMED solutions (user-verified) — Claude's primary lookup
-│   ├── INDEX.md            ← Tag/error-keyword query index — read THIS to find a solution
-│   ├── TEMPLATE.md         ← Frontmatter template for new resolutions
-│   └── R-NNN-<slug>.md     ← One file per confirmed resolution
+│   # ───── Runtime (mutable) ─────
+├── current-task.md             ← Active task: goal, status, owner, started_at
+├── plan.md                     ← Step-by-step plan for current task
+├── decisions.md                ← Runtime ADRs (new decisions during agent work)
+├── blockers.md                 ← Open blockers needing user/team-leader attention
+├── changelog.md                ← Append-only event log; every agent writes one row on finish
+├── api-contracts.md            ← LIVE MIRROR of implemented endpoints (subset of canonical)
 │
-├── sessions/               ← Chronological session logs (may include diagnostic-only work)
+├── resolutions/                ← CONFIRMED solutions (user-verified) — Claude's primary lookup
+│   ├── INDEX.md                ← Tag/error-keyword query index — read THIS to find a solution
+│   ├── TEMPLATE.md             ← Frontmatter template for new resolutions
+│   └── R-NNN-<slug>.md         ← One file per confirmed resolution
+│
+├── sessions/                   ← Chronological session logs (may include diagnostic-only work)
 │   └── YYYY-MM-DD-<slug>.md
 │
-├── qa-reports/             ← Per-run QA reports (test + screenshots + regressions)
+├── qa-reports/                 ← Per-run QA reports (test + screenshots + regressions)
 │   └── YYYY-MM-DD-<feature>.md
 │
 └── screenshots/
-    ├── baseline/           ← Approved visual-regression baselines (qa)
-    └── latest/             ← Most recent screenshots from current run (qa)
+    ├── baseline/               ← Approved visual-regression baselines (qa)
+    └── latest/                 ← Most recent screenshots from current run (qa)
 ```
+
+### Static knowledge vs Runtime — what goes where?
+
+| Category | Purpose | Mutability | Source of truth |
+|----------|---------|-----------|-----------------|
+| **Static knowledge** (`KNOWLEDGE-INDEX` + product/architecture/design/decisions/glossary/task-board) | Phase 1 spec — what we're building and how | Read-only for agents; only main assistant updates when handoff doc evolves | `plan/lastest/handoff/anmate-design-handoff.md` |
+| **Runtime** (`current-task`, `plan`, `decisions`, `blockers`, `changelog`, `api-contracts`) | What's happening right now in active agent work | Written every session | The agents themselves |
+| **Resolutions** | Verified fixes for recurring problems | Append-only; only after user confirms | User confirmation |
+| **Sessions / QA reports / Screenshots** | Historical record of what happened | Append-only journal | Each session/run |
 
 ---
 
@@ -117,13 +139,15 @@ Just write a `sessions/YYYY-MM-DD-<slug>.md` log + append `changelog.md` row. No
 | File / Dir | Primary writers | Readers |
 |------------|----------------|---------|
 | `INSTRUCTIONS.md` (this) | main assistant (when conventions evolve) | all |
-| `INDEX.md` | bootstrap; rarely changed | all (on start) |
+| `INDEX.md`, `KNOWLEDGE-INDEX.md` | main assistant; rarely changed | all (on start) |
+| `USAGE.md`, `ORCHESTRATION-README.md` | main assistant | all |
+| **Static-knowledge files** (`product-summary`, `architecture-overview`, `api-contracts-summary`, `domain-glossary`, `design-system`, `design-reference-index`, `shared-decisions`, `task-board`) | main assistant (re-derived from `plan/lastest/handoff/`) | all agents (read-only) |
 | `current-task.md` | team-leader, main assistant | all |
 | `plan.md` | team-leader | coder, qa |
 | `decisions.md` | team-leader, main assistant | all |
 | `blockers.md` | coder, qa raise; team-leader resolves | all |
 | `changelog.md` | **all agents** (append-only on finish) | all |
-| `api-contracts.md` | coder (when endpoints change) | qa |
+| `api-contracts.md` | coder (when endpoints ship) | qa |
 | `resolutions/` | main assistant (only after user confirmation) | all (lookup on start) |
 | `sessions/` | main assistant (chronological log) | human review; rarely read by agents |
 | `qa-reports/` | qa | team-leader, human review |
@@ -172,7 +196,11 @@ NEED CONTEXT?         → resolutions/INDEX.md (tags + error keywords)
 WHAT'S ACTIVE?        → current-task.md
 WHAT'S STUCK?         → blockers.md
 WHAT JUST HAPPENED?   → changelog.md (tail)
-WHAT'S DECIDED?       → decisions.md
+WHAT'S DECIDED?       → decisions.md (runtime) + shared-decisions.md (15 locked Phase 1)
+WHAT ARE WE BUILDING? → KNOWLEDGE-INDEX.md → product-summary.md
+WHAT'S THE API?       → api-contracts-summary.md (canonical) + api-contracts.md (live mirror)
+WHAT'S THE DESIGN?    → design-system.md + design-reference-index.md
+WHAT TASKS REMAIN?    → task-board.md
 HOW DO I DISPATCH?    → USAGE.md (agent team docs)
 
 DONE A FIX?

@@ -59,7 +59,7 @@ services:
       context: ./anmates_flutter
       dockerfile: Dockerfile
       args:
-        API_BASE_URL: ${API_BASE_URL:-http://localhost:8080}
+        API_BASE_URL: ${API_BASE_URL:-http://127.0.0.1/:8080}
     restart: unless-stopped
     ports:
       - "0.0.0.0:${FLUTTER_WEB_PORT:-54180}:80"

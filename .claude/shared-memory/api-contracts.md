@@ -1,34 +1,41 @@
-# API Contracts
+# API Contracts (Live Mirror)
 
-Shared schema between **coder** (who implements endpoints) and **qa** (who smoke-tests them). Updated by coder whenever an endpoint is added/changed; read by qa to build curl-based smoke tests.
+> **Canonical source:** [api-contracts-summary.md](api-contracts-summary.md) — Phase 1 endpoint catalog per handoff §5.
+>
+> This file mirrors the **implemented** subset that the `coder` agent has actually shipped, so the `qa` agent can smoke-test against current code. Coder updates this file as endpoints land in the Go backend; the canonical catalog above stays the design-time source of truth.
 
-Base URL: `http://localhost:8080`
+Base URL: `http://localhost:8080/api/v1` (dev) · `https://api.anmates.io/api/v1` (prod)
 
-## Endpoints (baseline — copied from AnMatesApp/README.md)
+**Auth header:** `Authorization: Bearer <access_jwt>`
+
+**Standard error response:**
+```json
+{ "error": "code_string", "message": "Vietnamese message", "details": {} }
+```
+
+---
+
+## Implemented Endpoints
 
 | Method | Path | Auth | Request | Response (200) | Notes |
 |--------|------|------|---------|----------------|-------|
-| POST | `/api/auth/register` | none | `{email, password, name}` | `{access_token, refresh_token}` | |
-| POST | `/api/auth/login` | none | `{email, password}` | `{access_token, refresh_token}` | |
-| POST | `/api/auth/refresh` | refresh | `{refresh_token}` | `{access_token}` | |
-| GET  | `/api/profile` | access | — | `{id, email, name, ...}` | |
-| PUT  | `/api/profile` | access | `{name?, bio?, ...}` | `{id, email, name, ...}` | |
-| GET  | `/api/matches` | access | — | `[{id, user, ...}, ...]` | |
-| POST | `/api/matches/:id/accept` | access | — | `{ok: true}` | |
-| GET  | `/api/conversations` | access | — | `[{id, peer, last_message}, ...]` | |
-| GET  | `/api/matches/:id/messages` | access | — | `[{from, body, ts}, ...]` | |
-| WS   | `/ws/chat/:matchId` | access (query token) | — | bidirectional `{type, payload}` | |
+| POST | `/auth/otp/request` | none | `{phone}` | `{request_id, expires_at}` | TTL 90s · 3/15min/phone |
+| POST | `/auth/otp/verify` | none | `{request_id, code}` | `{access_token, refresh_token, user_id, onboarding_step}` | 5 attempts max |
+| POST | `/auth/refresh` | refresh | `{refresh_token}` | `{access_token, refresh_token}` | rotates refresh |
+
+> Add rows above as endpoints ship. Match exact path + body shape from `api-contracts-summary.md`.
 
 ## Update Protocol
 
-When **coder** adds or modifies an endpoint:
-1. Add/update its row in the table above.
+When **coder** ships or modifies an endpoint:
+1. Add/update its row in the table above (only **implemented** endpoints).
 2. If response shape is complex, attach JSON example below in `### Schema details`.
-3. Bump the `Last updated` line at the bottom.
+3. Verify it matches the canonical catalog in `api-contracts-summary.md` — if it diverges, flag in `blockers.md` for architect review.
+4. Bump the `Last updated` line at the bottom.
 
 ## Schema details
 
 _(Empty — add JSON examples when needed.)_
 
 ---
-**Last updated:** 2026-05-25 (bootstrap)
+**Last updated:** 2026-05-26 (merged with Phase 1 canonical catalog)

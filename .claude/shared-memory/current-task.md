@@ -1,31 +1,57 @@
 # Current Task
 
-**Status:** done (web)
-**Owner:** main assistant
-**Started at:** 2026-05-25 22:50 UTC
-**Closed at:** 2026-05-26 (user confirmed "đã test done")
-**Goal:** Fix `INVALID_APP_CREDENTIAL` (HTTP 400) when AnMates app gửi OTP qua Firebase Phone Auth.
+**Status:** coding (Phase 0 → Phase 1)
+**Owner:** team-leader
+**Started at:** 2026-05-26 (this session)
+**Goal:** Refactor TOÀN BỘ UI Flutter app (`anmates_flutter/`) khớp 24 design HTML mới nhất (`plan/lastest/design/`) + animation spec chi tiết trong `design-system.md`. Phased delivery (8 phases). This session covers **Phase 0 (Foundation) + Phase 1 (Onboarding screens 01-07)**.
 
-## Resolution
+## Scope (this session)
 
-Root cause = `127.0.0.1` không nằm trong **Firebase Console → Authorized domains**, dù `localhost` đã có. Browser issue reCAPTCHA token gắn với origin chính xác; `localhost` và `127.0.0.1` là 2 origin khác nhau ở góc nhìn của reCAPTCHA.
+- **Phase 0** — Foundation primitives + theme extension + assets
+  - Brand primitives: `AppButton` (Primary/Secondary/Outline/Danger/Ghost), `AppChip` (Filter/Tag/Mood/State), `AppCard` (Restaurant/Mate/Booking), `AppInput` (Text/Phone/OTP/Search), `Avatar` (with optional TrustBadge ring), `VibeRing` (0–100 circular), `TrustBadge` (Perfect/Trusted/Limited), `AppLoader` (3 modes: splash / overlay / top-bar), `Sparkle` (twinkle SVG)
+  - Theme extension: spacing tokens, semantic colors, reduce-motion provider, haptic helper
+  - Assets folder skeleton: `assets/sparkles/` (CustomPainter fallback if no SVG)
+- **Phase 1** — Onboarding (Screens 01–07)
+  - 01 Splash (full animation timeline)
+  - 02/03/04 Onboard carousel (3 educational screens with hero animations)
+  - 05 Đăng nhập (phone + Apple ID — keep existing Firebase wiring)
+  - 06 OTP (6-digit auto-advance — keep existing Firebase wiring)
+  - 07 Face verify (liveness mock — UI only, no real ML)
 
-**Fix (web):** add `127.0.0.1` vào Authorized domains + truy cập app qua `http://127.0.0.1:PORT` thay vì `http://localhost:PORT`.
+## Out of scope (next sessions)
 
-Sau khi fix, Flutter code được refactor lại theo Firebase Phone Auth docs (init Firebase ở `main()`, `RecaptchaVerifier` lifecycle, central error mapping, `wsUrl` derive từ env).
+- Phase 2 (08, 09a, 10a — profile setup)
+- Phase 3 (09b, 10b, 11 — discovery)
+- Phase 4 (12, 13 — match)
+- Phase 5 (14, 15, 16, 17 — chat + booking)
+- Phase 6 (18-22 — kèo/letter/tracking/review)
+- Phase 7 (23, 24 — tab Mình + trust)
+- N1-N7 screens (no design yet — design-team blocker)
+- Phase 2 IAP screens (25-28)
+- Backend Go changes
 
-Full detail: [sessions/2026-05-26-firebase-phone-otp-resolved.md](sessions/2026-05-26-firebase-phone-otp-resolved.md).
+## Acceptance criteria (this session)
 
-## Acceptance criteria
-- [x] (User) Add `127.0.0.1` vào Firebase Authorized domains
-- [x] (User) Test OTP gửi/verify trên web localhost → success
-- [x] (Main assistant) Refactor code Flutter theo Firebase best practices
-- [x] (Main assistant) `flutter analyze` clean + `flutter build web` success
-- [ ] (Future) Android real-phone test — cần SHA-1/SHA-256 keystore release đăng ký Firebase
-- [ ] (Future) iOS real-phone test — cần APNs Auth Key (.p8) upload + `aps-environment` entitlement + `CFBundleURLTypes` cho reCAPTCHA fallback
+- [ ] Phase 0 primitives in `lib/widgets/anm/` — all 9 primitives implemented + exported from a barrel file
+- [ ] Theme extended with spacing/semantic tokens; reduce-motion + haptic helpers in `lib/services/`
+- [ ] `pubspec.yaml` updated (`flutter_svg` added; `lottie` only if needed)
+- [ ] Phase 1 screens 01-07 rewritten end-to-end matching reference HTML + design-system.md animation timelines
+- [ ] Existing Firebase OTP wiring preserved (no regression on R-001 fix)
+- [ ] Vietnamese diacritics render OK on all copy
+- [ ] Hit targets ≥44×44px on every tappable element
+- [ ] Reduce-motion mode covers all animated screens
+- [ ] `flutter analyze` clean (0 errors, ≤5 warnings)
+- [ ] `flutter test` passes (existing tests must continue to pass; no new tests required this session)
+- [ ] QA report saved to `qa-reports/2026-05-26-phase-0-1.md`
 
-## Notes
-- `INVALID_APP_CREDENTIAL` là response của Google Identity Toolkit (`identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode`) — không phải từ backend Go.
-- Cơ chế Firebase verify app theo platform: Web = reCAPTCHA + authorized domain; Android = SHA fingerprint + Play Integrity; iOS = APNs silent push + fallback reCAPTCHA URL scheme.
-- Firebase Phone Auth từ Sept 2023 yêu cầu **Blaze plan** — Spark plan sẽ trả error.
-- `RecaptchaVerifier` chỉ dùng 1 lần — phải `clear()` trước khi tạo mới.
+## Key references
+
+- HTML designs: `plan/lastest/design/01 _ Splash.html` … `07 _ Face verify.html` + `Brand system.html` (READ FIRST) + `Logo studies.html`
+- Animation timelines: `.claude/shared-memory/design-system.md` lines ~200–700 (AppLoader, Sparkle, Splash, Onboard 02/03/04, Auth 05/06/07)
+- Existing legacy code to REPLACE: `lib/views/splash/splash_screen.dart`, `lib/views/onboarding/onboarding_view.dart`, `lib/views/auth/auth_view.dart`, `lib/views/auth/phone_input_view.dart`, `lib/views/auth/otp_view.dart`
+- Brand tokens (LOCKED — do not invent new shades): `lib/theme/app_theme.dart` `AppColors`
+- Firebase OTP code (must keep wiring): `auth_error_messages.dart`, services hitting Firebase Phone Auth
+
+## Loop policy
+
+Max 3 coder→qa cycles for Phase 1. If still failing after 3, mark blocked and escalate to user.
