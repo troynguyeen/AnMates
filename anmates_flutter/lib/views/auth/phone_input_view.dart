@@ -78,18 +78,24 @@ class _PhoneInputViewState extends State<PhoneInputView> {
     }
   }
 
-  // ── Web flow: Firebase tự tạo invisible reCAPTCHA → ConfirmationResult ────
+  // ── Web flow: explicit RecaptchaVerifier bound to #recaptcha-container ────
   Future<void> _sendOtpWeb(String phone) async {
     try {
+      final verifier = RecaptchaVerifier(
+        auth: FirebaseAuthPlatform.instance,
+        container: 'recaptcha-container',
+        size: RecaptchaVerifierSize.normal,
+        theme: RecaptchaVerifierTheme.light,
+      );
       final confirmationResult =
-          await FirebaseAuth.instance.signInWithPhoneNumber(phone);
+          await FirebaseAuth.instance.signInWithPhoneNumber(phone, verifier);
       if (!mounted) return;
       setState(() => _loading = false);
       _goToOtp(phone, verificationId: '', confirmationResult: confirmationResult);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      _showError(_friendlyError(e.code));
+      _showError('${e.code}: ${e.message ?? _friendlyError(e.code)}');
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);

@@ -46,13 +46,11 @@
 </head>
 <body>
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
+    reCAPTCHA container for Firebase Phone Auth on Web. The Firebase JS SDK
+    attaches the v2 widget here; without it, grecaptcha hits a null DOM
+    node and throws "Cannot read properties of null (reading 'style')".
   -->
+  <div id="recaptcha-container" style="position:fixed;bottom:16px;right:16px;z-index:9999;"></div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -1,18 +1,8 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
-      "PowerShell(Start-Process \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview.html\")",
-      "Bash(start \"\" \"d:\\\\ThanhPC\\\\AnMates\\\\media\\\\logo\\\\preview2.html\")",
-      "Bash(go build *)",
-      "PowerShell($ErrorActionPreference='Continue'; \\(Get-Command go -ErrorAction SilentlyContinue\\).Source)",
-      "PowerShell(@\\('C:\\\\Program Files\\\\Go\\\\bin\\\\go.exe','C:\\\\go\\\\bin\\\\go.exe', \"$env:USERPROFILE\\\\go\\\\bin\\\\go.exe\", \"$env:LOCALAPPDATA\\\\Programs\\\\Go\\\\bin\\\\go.exe\"\\) | ForEach-Object { if \\(Test-Path $_\\) { Write-Output $_ } })",
-      "Bash(node c:/AnM/AnMates/scripts/run-flutter.mjs --version)",
-      "Bash(Get-ChildItem -Path \"c:\\\\AnM\\\\AnMates\" -Force)",
-      "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(flutter run *)",
-      "PowerShell(Get-Command flutter -ErrorAction SilentlyContinue)",
-      "PowerShell(@\\(\"C:\\\\flutter\\\\bin\\\\flutter.bat\", \"C:\\\\src\\\\flutter\\\\bin\\\\flutter.bat\", \"$env:USERPROFILE\\\\flutter\\\\bin\\\\flutter.bat\", \"$env:LOCALAPPDATA\\\\flutter\\\\bin\\\\flutter.bat\", \"C:\\\\tools\\\\flutter\\\\bin\\\\flutter.bat\"\\) | Where-Object { Test-Path $_ })",
-      "Read(//c/Users/Admin/**)"
+      "Bash(flutter analyze *)"
     ]
   }
 }
