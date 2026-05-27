@@ -639,18 +639,16 @@ class _MateProfile {
   final String name;
   final int age;
   final List<String> chips;
-  /// Realistic face photo via pravatar.cc (deterministic by img= param).
-  final String avatarUrl;
-  const _MateProfile(this.name, this.age, this.chips, this.avatarUrl);
+  /// Local asset path — place images in assets/avatars/
+  final String asset;
+  const _MateProfile(this.name, this.age, this.chips, this.asset);
 }
 
 const _kMates = [
-  _MateProfile('Vy',   24, ['🌶️ Cay 3',   '💬 Tám'],      'https://i.pravatar.cc/400?img=47'),
-  _MateProfile('Minh', 22, ['🍜 Mì cay',  '🎮 Gaming'],    'https://i.pravatar.cc/400?img=12'),
-  _MateProfile('Linh', 26, ['☕ Cafe',     '📚 Sách'],      'https://i.pravatar.cc/400?img=48'),
-  _MateProfile('Nam',  25, ['🍖 Nướng',   '🏃 Chạy bộ'],   'https://i.pravatar.cc/400?img=15'),
-  _MateProfile('Hà',   23, ['🌮 Ăn vặt',  '🎵 Nhạc'],      'https://i.pravatar.cc/400?img=49'),
-  _MateProfile('Tuấn', 27, ['🍣 Sushi',   '📷 Ảnh'],       'https://i.pravatar.cc/400?img=16'),
+  _MateProfile('Vy',   24, ['🌶️ Cay 3',  '💬 Tám'],     'assets/avatars/vy.jpg'),
+  _MateProfile('Minh', 22, ['☕ Cafe',    '🎵 Chill'],   'assets/avatars/minh.jpg'),
+  _MateProfile('Nam',  25, ['🏃 Chạy bộ','💪 Gym'],     'assets/avatars/nam.jpg'),
+  _MateProfile('Linh', 23, ['🌃 Sài Gòn','📸 Ảnh'],     'assets/avatars/linh.jpg'),
 ];
 
 // ─── Screen 03 Illustration — Tinder-style swipeable card stack ──────────────
@@ -896,39 +894,19 @@ class _MateProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Photo area — realistic avatar via pravatar.cc ─────────────
+          // ── Photo area — local asset avatar ───────────────────────────
           Expanded(
             flex: 11,
             child: ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(
-                profile.avatarUrl,
+              child: Image.asset(
+                profile.asset,
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
                 filterQuality: FilterQuality.medium,
-                // Shows diagonal-stripe placeholder while image loads
-                loadingBuilder: (_, child, progress) {
-                  if (progress == null) return child;
-                  return Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CustomPaint(painter: _DiagonalStripesPainter()),
-                      Center(
-                        child: SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.wisteria.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                // Falls back to diagonal stripes on network error
+                // Falls back to diagonal stripes if asset missing
                 errorBuilder: (_, _, _) => Stack(
                   fit: StackFit.expand,
                   children: [
