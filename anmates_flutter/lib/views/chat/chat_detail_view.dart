@@ -171,7 +171,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.ocean.withOpacity(0.1),
+          color: AppColors.ocean.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
@@ -243,9 +243,9 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: c.$2.withOpacity(0.1),
+                  color: c.$2.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: c.$2.withOpacity(0.35)),
+                  border: Border.all(color: c.$2.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   c.$1,
@@ -274,7 +274,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.berry.withOpacity(0.28),
+            color: AppColors.berry.withValues(alpha: 0.28),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -282,7 +282,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
       ),
       child: Row(
         children: [
-          Sparkle(size: 28, color: Colors.white.withOpacity(0.9)),
+          Sparkle(size: 28, color: Colors.white.withValues(alpha: 0.9)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -314,7 +314,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(

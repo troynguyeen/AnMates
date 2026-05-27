@@ -32,7 +32,7 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
       maxChildSize: 0.95,
       builder: (_, ctrl) => Container(
         decoration: const BoxDecoration(
-          color: const Color(0xFF1E1E2E),
+          color: Color(0xFF1E1E2E),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: ListView(
@@ -111,7 +111,7 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: _selectedTags.contains(t)
-                              ? AppColors.berry.withOpacity(0.3)
+                              ? AppColors.berry.withValues(alpha: 0.3)
                               : const Color(0xFF2D2D42),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(

@@ -34,7 +34,7 @@ class _SmartFiltersSheetState extends State<SmartFiltersSheet> {
       minChildSize: 0.4,
       builder: (_, ctrl) => Container(
         decoration: const BoxDecoration(
-          color: const Color(0xFF1E1E2E),
+          color: Color(0xFF1E1E2E),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: ListView(
@@ -94,7 +94,7 @@ class _SmartFiltersSheetState extends State<SmartFiltersSheet> {
                 const Spacer(),
                 Switch(
                   value: _filter.openNow,
-                  activeColor: AppColors.berry,
+                  activeThumbColor: AppColors.berry,
                   onChanged: (v) => setState(() => _filter.openNow = v),
                 ),
               ],
@@ -116,7 +116,7 @@ class _SmartFiltersSheetState extends State<SmartFiltersSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: _filter.suitableFor == o
-                              ? AppColors.berry.withOpacity(0.3)
+                              ? AppColors.berry.withValues(alpha: 0.3)
                               : const Color(0xFF2D2D42),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
@@ -211,7 +211,7 @@ class _SliderRow extends StatelessWidget {
             activeTrackColor: AppColors.berry,
             inactiveTrackColor: const Color(0xFF2D2D42),
             thumbColor: AppColors.berry,
-            overlayColor: AppColors.berry.withOpacity(0.2),
+            overlayColor: AppColors.berry.withValues(alpha: 0.2),
           ),
           child: Slider(
             value: value.clamp(min, max),

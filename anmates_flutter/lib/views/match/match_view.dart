@@ -46,7 +46,7 @@ class MatchView extends StatelessWidget {
                       style: AppTextStyles.mono(
                         size: 11,
                         weight: FontWeight.w700,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         letterSpacing: 2.5,
                       ),
                     ),
@@ -67,7 +67,7 @@ class MatchView extends StatelessWidget {
                       'Cả hai đều thèm $restaurantName — vào chat làm nóng nồi lẩu nào.',
                       style: AppTextStyles.body(
                         size: 15,
-                        color: Colors.white.withOpacity(0.82),
+                        color: Colors.white.withValues(alpha: 0.82),
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -130,7 +130,7 @@ class MatchView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -157,7 +157,7 @@ class MatchView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -182,7 +182,7 @@ class MatchView extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.berry.withOpacity(0.4),
+                    color: AppColors.berry.withValues(alpha: 0.4),
                     blurRadius: 16,
                     spreadRadius: 2,
                   ),

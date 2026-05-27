@@ -115,7 +115,7 @@ class _BookingViewState extends State<BookingView> {
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1.5,
           // Dashed effect simulated via strokeAlign + decoration
         ),
@@ -126,7 +126,7 @@ class _BookingViewState extends State<BookingView> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -152,7 +152,7 @@ class _BookingViewState extends State<BookingView> {
                   'Áp dụng khi cả hai check-in đúng giờ',
                   style: AppTextStyles.body(
                     size: 12,
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                   ),
                 ),
               ],
@@ -265,7 +265,7 @@ class _BookingViewState extends State<BookingView> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.berry.withOpacity(0.3),
+                                color: AppColors.berry.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               )
@@ -371,7 +371,7 @@ class _BookingViewState extends State<BookingView> {
                     boxShadow: active
                         ? [
                             BoxShadow(
-                              color: AppColors.berry.withOpacity(0.25),
+                              color: AppColors.berry.withValues(alpha: 0.25),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             )
@@ -402,9 +402,9 @@ class _BookingViewState extends State<BookingView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.ocean.withOpacity(0.07),
+        color: AppColors.ocean.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.ocean.withOpacity(0.2)),
+        border: Border.all(color: AppColors.ocean.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,7 +413,7 @@ class _BookingViewState extends State<BookingView> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.ocean.withOpacity(0.15),
+              color: AppColors.ocean.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Center(child: Sparkle(size: 18, color: AppColors.ocean)),

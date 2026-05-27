@@ -87,7 +87,7 @@ class _DiscoverViewState extends State<DiscoverView> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.ink.withOpacity(0.06),
+              color: AppColors.ink.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -155,7 +155,7 @@ class _DiscoverViewState extends State<DiscoverView> {
               end: Alignment.bottomRight,
             )),
             ('Ăn vặt phố', '🍢', LinearGradient(
-              colors: [AppColors.glaucous, AppColors.glaucous.withOpacity(0.7)],
+              colors: [AppColors.glaucous, AppColors.glaucous.withValues(alpha: 0.7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             )),
@@ -288,22 +288,6 @@ class _HorizontalDraggableGenreListState extends State<_HorizontalDraggableGenre
     setState(() => _isDragging = false);
   }
 
-  void _onTouchStart(PointerDownEvent event) {
-    setState(() => _isDragging = true);
-    _dragStart = event.position.dx;
-    _scrollStart = _scrollCtrl.offset;
-  }
-
-  void _onTouchMove(PointerMoveEvent event) {
-    if (!_isDragging) return;
-    final delta = event.position.dx - _dragStart;
-    _scrollCtrl.jumpTo(_scrollStart - delta);
-  }
-
-  void _onTouchEnd(PointerUpEvent event) {
-    setState(() => _isDragging = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Listener(
@@ -408,7 +392,7 @@ class _GenreCardState extends State<_GenreCard> with SingleTickerProviderStateMi
             boxShadow: [
               BoxShadow(
                 color: widget.gradient.colors.first
-                    .withOpacity(_hovered ? 0.48 : 0.30),
+                    .withValues(alpha: _hovered ? 0.48 : 0.30),
                 blurRadius: _hovered ? 20 : 10,
                 offset: Offset(0, _hovered ? 8 : 4),
               ),
@@ -487,7 +471,7 @@ class _RestaurantRowState extends State<_RestaurantRow> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: AppColors.ink.withOpacity(_hovered ? 0.09 : 0.05),
+              color: AppColors.ink.withValues(alpha: _hovered ? 0.09 : 0.05),
               blurRadius: _hovered ? 20 : 12,
               offset: Offset(0, _hovered ? 8 : 4),
             ),
@@ -531,7 +515,7 @@ class _RestaurantRowState extends State<_RestaurantRow> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.berry.withOpacity(0.12),
+                    color: AppColors.berry.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(

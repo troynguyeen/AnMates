@@ -189,7 +189,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(999),
                         child: Container(
                           height: 4,
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           child: FractionallySizedBox(
                             alignment: Alignment.centerLeft,
                             widthFactor: filled,
@@ -215,7 +215,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Colors.white.withOpacity(0.70),
+                      color: Colors.white.withValues(alpha: 0.70),
                     ),
                   ),
                 ],

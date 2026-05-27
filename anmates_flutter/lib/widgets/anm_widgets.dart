@@ -52,8 +52,8 @@ class _AnmCTAState extends State<AnmCTA> {
             boxShadow: isBerry
                 ? [
                     BoxShadow(
-                      color: AppColors.berry.withOpacity(
-                          (_hovered && widget.onTap != null) ? 0.50 : 0.35),
+                      color: AppColors.berry.withValues(
+                          alpha: (_hovered && widget.onTap != null) ? 0.50 : 0.35),
                       blurRadius: (_hovered && widget.onTap != null) ? 36 : 24,
                       offset: (_hovered && widget.onTap != null)
                           ? const Offset(0, 12)
@@ -169,15 +169,15 @@ class _AnmChipState extends State<AnmChip> {
                   ? activeColor
                   : _hovered
                       ? (widget.dark
-                          ? Colors.white.withOpacity(0.18)
-                          : activeColor.withOpacity(0.08))
+                          ? Colors.white.withValues(alpha: 0.18)
+                          : activeColor.withValues(alpha: 0.08))
                       : (widget.dark ? Colors.white12 : Colors.white),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: widget.active
                     ? Colors.transparent
                     : _hovered
-                        ? (widget.dark ? Colors.white38 : activeColor.withOpacity(0.35))
+                        ? (widget.dark ? Colors.white38 : activeColor.withValues(alpha: 0.35))
                         : (widget.dark ? Colors.white24 : AppColors.ink10),
                 width: 1,
               ),
@@ -246,7 +246,7 @@ class ScreenTitle extends StatelessWidget {
             style: AppTextStyles.body(
               size: 15,
               color: dark
-                  ? Colors.white.withOpacity(0.7)
+                  ? Colors.white.withValues(alpha: 0.7)
                   : AppColors.ink70,
               height: 1.4,
             ),
@@ -290,7 +290,7 @@ class PhotoSlot extends StatelessWidget {
               )
             : LinearGradient(
                 colors: [
-                  AppColors.wisteria.withOpacity(0.3),
+                  AppColors.wisteria.withValues(alpha: 0.3),
                   AppColors.mint,
                 ],
                 begin: Alignment.topLeft,
@@ -582,8 +582,8 @@ class VibeProgressBar extends StatelessWidget {
                           height: 14,
                           decoration: BoxDecoration(
                             color: (s.p <= percent)
-                                ? Colors.white.withOpacity(0.7)
-                                : AppColors.ink.withOpacity(0.15),
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : AppColors.ink.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(1),
                           ),
                         ),
@@ -600,7 +600,7 @@ class VibeProgressBar extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.berry.withOpacity(0.12),
+                              color: AppColors.berry.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -683,7 +683,7 @@ class _VibeBarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(0, barTop, w, barH), radius),
-      trackPaint..color = trackPaint.color.withOpacity(0.18),
+      trackPaint..color = trackPaint.color.withValues(alpha: 0.18),
     );
 
     // Filled
@@ -790,7 +790,7 @@ class _TabItemState extends State<_TabItem> {
     final color = widget.active
         ? AppColors.berry
         : _hovered
-            ? AppColors.berry.withOpacity(0.55)
+            ? AppColors.berry.withValues(alpha: 0.55)
             : AppColors.ink50;
 
     return MouseRegion(

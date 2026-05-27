@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/anm_widgets.dart';
 
@@ -113,7 +112,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.ink.withOpacity(0.06),
+                    color: AppColors.ink.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -155,7 +154,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.ink.withOpacity(0.06),
+                  color: AppColors.ink.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -179,7 +178,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
           // Back card 2
           Transform(
             transform: Matrix4.identity()
-              ..translate(0.0, 16.0)
+              ..translateByDouble(0.0, 16.0, 0.0, 1.0)
               ..rotateZ(3 * math.pi / 180),
             alignment: Alignment.bottomCenter,
             child: Opacity(
@@ -190,7 +189,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
           // Back card 1
           Transform(
             transform: Matrix4.identity()
-              ..translate(0.0, 8.0)
+              ..translateByDouble(0.0, 8.0, 0.0, 1.0)
               ..rotateZ(1.5 * math.pi / 180),
             alignment: Alignment.bottomCenter,
             child: Opacity(
@@ -205,7 +204,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
             child: AnimatedContainer(
               duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
               transform: Matrix4.identity()
-                ..translate(_dragOffset.dx, _dragOffset.dy)
+                ..translateByDouble(_dragOffset.dx, _dragOffset.dy, 0.0, 1.0)
                 ..rotateZ(rotation),
               alignment: Alignment.center,
               child: _buildCard(isInteractive: true),
@@ -225,7 +224,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
         boxShadow: isInteractive
             ? [
                 BoxShadow(
-                  color: AppColors.ink.withOpacity(0.12),
+                  color: AppColors.ink.withValues(alpha: 0.12),
                   blurRadius: 30,
                   offset: const Offset(0, 12),
                 ),
@@ -307,7 +306,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.55),
+                            color: Colors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -326,7 +325,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.55),
+                            color: Colors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
@@ -450,7 +449,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                 border: Border.all(color: AppColors.ink, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.ink.withOpacity(0.08),
+                    color: AppColors.ink.withValues(alpha: 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -473,7 +472,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.glaucous.withOpacity(0.35),
+                    color: AppColors.glaucous.withValues(alpha: 0.35),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -499,7 +498,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.berry.withOpacity(0.45),
+                          color: AppColors.berry.withValues(alpha: 0.45),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                           spreadRadius: 2,
@@ -524,7 +523,7 @@ class _SwipeViewState extends State<SwipeView> with SingleTickerProviderStateMix
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.wisteria.withOpacity(0.35),
+                    color: AppColors.wisteria.withValues(alpha: 0.35),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),

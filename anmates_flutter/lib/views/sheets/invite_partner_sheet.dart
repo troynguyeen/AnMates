@@ -16,7 +16,7 @@ class InvitePartnerSheet extends StatelessWidget {
       minChildSize: 0.4,
       builder: (_, ctrl) => Container(
         decoration: const BoxDecoration(
-          color: const Color(0xFF1E1E2E),
+          color: Color(0xFF1E1E2E),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: ListView.builder(

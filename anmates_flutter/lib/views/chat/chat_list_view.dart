@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/anm_logo.dart';
 import '../../widgets/anm_widgets.dart';
 import 'chat_detail_view.dart';
 
@@ -188,7 +187,7 @@ class _ChatListViewState extends State<ChatListView> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _newMatches.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (_, i) => _NewMatchCard(match: _newMatches[i]),
             ),
           ),
@@ -456,7 +455,7 @@ class _ActiveChatCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: vibeColor.withOpacity(0.12),
+                          color: vibeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -630,9 +629,9 @@ class _BestMateRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.wisteria.withOpacity(0.12),
+                color: AppColors.wisteria.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.wisteria.withOpacity(0.4)),
+                border: Border.all(color: AppColors.wisteria.withValues(alpha: 0.4)),
               ),
               child: Text(
                 'Rủ đi',
@@ -684,7 +683,7 @@ class _CountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

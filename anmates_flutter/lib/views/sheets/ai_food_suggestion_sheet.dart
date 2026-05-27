@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
-import '../../theme/app_theme.dart';
 
 class AIFoodSuggestionSheet extends StatefulWidget {
   final Place place;
@@ -24,7 +23,7 @@ class _AIFoodSuggestionSheetState extends State<AIFoodSuggestionSheet> {
       maxChildSize: 0.95,
       builder: (_, ctrl) => Container(
         decoration: const BoxDecoration(
-          color: const Color(0xFF1E1E2E),
+          color: Color(0xFF1E1E2E),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: ListView(
@@ -120,7 +119,7 @@ class _AIFoodSuggestionSheetState extends State<AIFoodSuggestionSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? m.color.withOpacity(0.3)
+                            ? m.color.withValues(alpha: 0.3)
                             : const Color(0xFF2D2D42),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
@@ -181,7 +180,7 @@ class _SuggestionCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   suggestion.estimatedPrice,
-                  style: const TextStyle(color: const Color(0xFF00B894), fontSize: 12),
+                  style: const TextStyle(color: Color(0xFF00B894), fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -197,7 +196,7 @@ class _SuggestionCard extends StatelessWidget {
               Text(
                 '${suggestion.matchScore}%',
                 style: const TextStyle(
-                  color: const Color(0xFF00B894),
+                  color: Color(0xFF00B894),
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),

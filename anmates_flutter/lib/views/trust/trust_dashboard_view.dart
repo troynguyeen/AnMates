@@ -155,7 +155,7 @@ class TrustDashboardView extends StatelessWidget {
                 Positioned(
                   bottom: 14,
                   left: 12,
-                  child: Sparkle(size: 14, color: AppColors.berry.withOpacity(0.5)),
+                  child: Sparkle(size: 14, color: AppColors.berry.withValues(alpha: 0.5)),
                 ),
                 // Ring
                 CustomPaint(
@@ -200,9 +200,9 @@ class TrustDashboardView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.berry.withOpacity(0.1),
+              color: AppColors.berry.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.berry.withOpacity(0.25)),
+              border: Border.all(color: AppColors.berry.withValues(alpha: 0.25)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -519,7 +519,7 @@ class _EventCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: event.color.withOpacity(0.12),
+              color: event.color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -555,7 +555,7 @@ class _EventCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: deltaColor.withOpacity(0.1),
+              color: deltaColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
