@@ -661,21 +661,40 @@ class _Step2Illustration extends StatefulWidget {
 
 class _Step2IllustrationState extends State<_Step2Illustration>
     with TickerProviderStateMixin {
-  // Entry: fade + slide-up (plays once on mount)
+  // ── Persistent animations ──────────────────────────────────────────────────
   late final AnimationController _entryCtrl;
   late final Animation<double> _entryFade;
   late final Animation<Offset> _entrySlide;
-  // Ambient float (whole stack bobs up/down)
   late final AnimationController _floatCtrl;
   late final Animation<double> _floatAnim;
-  // Heart badge pulse
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
-  // Swipe-out: tap front card → flies right, back cards promote
-  late final AnimationController _swipeCtrl;
 
-  int _topIdx = 0; // current front-card index into _kMates
-  bool _isSwiping = false;
+  // ── Fly-out / snap-back (duration set per use) ────────────────────────────
+  late final AnimationController _moveCtrl;
+  Animation<Offset> _moveAnim = const AlwaysStoppedAnimation(Offset.zero);
+
+  // ── Drag state ─────────────────────────────────────────────────────────────
+  int _topIdx = 0;
+  Offset _dragOffset = Offset.zero; // live position delta while dragging
+  bool _isDragging = false;
+  bool _isFlying = false;           // true while fly-out animation plays
+
+  static const double _kThreshold  = 90.0;  // px to commit swipe
+  static const double _kVThreshold = 350.0; // velocity px/s to commit
+
+  // ── Computed live position ─────────────────────────────────────────────────
+  Offset get _liveOffset {
+    if (_isDragging) return _dragOffset;
+    if (_moveCtrl.isAnimating) return _moveAnim.value;
+    return _dragOffset;
+  }
+
+  /// 0 = cards stacked, 1 = fully promoted (front gone)
+  double get _promotionT {
+    if (_isFlying) return 1.0;
+    return (_liveOffset.dx.abs() / _kThreshold).clamp(0.0, 1.0);
+  }
 
   @override
   void initState() {
@@ -700,8 +719,7 @@ class _Step2IllustrationState extends State<_Step2Illustration>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
         CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    _swipeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 650));
+    _moveCtrl = AnimationController(vsync: this);
 
     Future.delayed(const Duration(milliseconds: 180), () {
       if (!mounted) return;
@@ -716,25 +734,84 @@ class _Step2IllustrationState extends State<_Step2Illustration>
     _entryCtrl.dispose();
     _floatCtrl.dispose();
     _pulseCtrl.dispose();
-    _swipeCtrl.dispose();
+    _moveCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _swipeRight() async {
-    if (_isSwiping) return;
-    setState(() => _isSwiping = true);
-    _floatCtrl.stop(); // freeze float while card flies
-    await _swipeCtrl.forward();
+  // ── Gesture handlers ───────────────────────────────────────────────────────
+  void _onPanStart(DragStartDetails _) {
+    if (_isFlying) return;
+    _moveCtrl.stop();
+    _floatCtrl.stop();
+    setState(() {
+      _isDragging = true;
+      _dragOffset = Offset.zero;
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails d) {
+    if (_isFlying) return;
+    setState(() => _dragOffset += d.delta);
+  }
+
+  void _onPanEnd(DragEndDetails d) {
+    if (_isFlying) return;
+    final vx = d.velocity.pixelsPerSecond.dx;
+    final committed =
+        _dragOffset.dx.abs() > _kThreshold || vx.abs() > _kVThreshold;
+    setState(() => _isDragging = false);
+
+    if (committed) {
+      final dir = (_dragOffset.dx >= 0 || vx >= 0) ? 1.0 : -1.0;
+      _flyOut(dir);
+    } else {
+      _snapBack();
+    }
+  }
+
+  // Tap still works as a quick right-swipe
+  void _onTap() {
+    if (_isFlying || _isDragging) return;
+    _flyOut(1.0);
+  }
+
+  // ── Fly-out: card launches in `dir` direction with easeIn acceleration ─────
+  Future<void> _flyOut(double dir) async {
+    setState(() => _isFlying = true);
+    _floatCtrl.stop();
+    final start = _dragOffset;
+    final end   = Offset(dir * 500.0, start.dy + 50.0);
+    _moveAnim = Tween<Offset>(begin: start, end: end)
+        .animate(CurvedAnimation(parent: _moveCtrl, curve: Curves.easeIn));
+    _moveCtrl
+      ..duration = const Duration(milliseconds: 420)
+      ..reset();
+    await _moveCtrl.forward();
     if (!mounted) return;
     setState(() {
       _topIdx = (_topIdx + 1) % _kMates.length;
-      _isSwiping = false;
+      _dragOffset = Offset.zero;
+      _isFlying = false;
     });
-    _swipeCtrl.reset();
-    _floatCtrl.repeat(reverse: true); // resume float
+    _moveCtrl.reset();
+    _floatCtrl.repeat(reverse: true);
   }
 
-  // Linear interpolation helper
+  // ── Snap-back: elastic spring return to center ─────────────────────────────
+  Future<void> _snapBack() async {
+    final start = _dragOffset;
+    _moveAnim = Tween<Offset>(begin: start, end: Offset.zero)
+        .animate(CurvedAnimation(parent: _moveCtrl, curve: Curves.elasticOut));
+    _moveCtrl
+      ..duration = const Duration(milliseconds: 600)
+      ..reset();
+    await _moveCtrl.forward();
+    if (!mounted) return;
+    setState(() => _dragOffset = Offset.zero);
+    _moveCtrl.reset();
+    _floatCtrl.repeat(reverse: true);
+  }
+
   static double _l(double a, double b, double t) => a + (b - a) * t;
 
   @override
@@ -744,35 +821,35 @@ class _Step2IllustrationState extends State<_Step2Illustration>
       child: SlideTransition(
         position: _entrySlide,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_floatCtrl, _swipeCtrl, _pulseCtrl]),
+          animation: Listenable.merge([_floatCtrl, _moveCtrl, _pulseCtrl]),
           builder: (_, _) {
-            final t  = _swipeCtrl.value; // 0 → 1 during swipe
-            final te = Curves.easeIn.transform(t); // gentle acceleration for natural feel
-            final float = _isSwiping ? 0.0 : _floatAnim.value;
+            final live = _liveOffset;
+            final t    = _promotionT;
+            // Float: only when card is at rest
+            final float = (_isDragging || _isFlying || _moveCtrl.isAnimating)
+                ? 0.0
+                : _floatAnim.value;
 
-            // Profiles visible at each layer
-            final frontP = _kMates[_topIdx % _kMates.length];
-            final midP   = _kMates[(_topIdx + 1) % _kMates.length];
-            final backP  = _kMates[(_topIdx + 2) % _kMates.length];
+            // Rotation proportional to horizontal drag (Tinder-style tilt)
+            final frontAngle = live.dx * 0.0022; // ~0.13°/px
 
-            // ── Back card: back_pos → mid_pos as t goes 0→1
-            final backAngle = _l(-9, 5, t) * math.pi / 180;
-            final backTop   = _l(18, 10, t);
-            final backLeft  = _l(0, 12, t);
-            final backAlpha = _l(0.50, 0.75, t);
+            // Behind cards promote toward front as front card is dragged away
+            final backAngle  = _l(-9, 5, t) * math.pi / 180;
+            final backTop    = _l(18, 10, t);
+            final backLeft   = _l(0, 12, t);
+            final backAlpha  = _l(0.50, 0.75, t);
+            final midAngle   = _l(5, 0, t) * math.pi / 180;
+            final midTop     = _l(10, 0, t);
+            final midLeft    = _l(12, 20, t);
+            final midAlpha   = _l(0.75, 1.0, t);
 
-            // ── Mid card: mid_pos → front_pos
-            final midAngle = _l(5, 0, t) * math.pi / 180;
-            final midTop   = _l(10, 0, t);
-            final midLeft  = _l(12, 20, t);
-            final midAlpha = _l(0.75, 1.0, t);
-
-            // ── Front card: translate right + rotate CW + fade near end
-            final frontDx    = _l(0, 430, te);
-            final frontAngle = _l(0, 22, t) * math.pi / 180;
-            final frontAlpha = t < 0.55
+            // Front card fades only well past threshold (not during snap-back)
+            final dxAbs = live.dx.abs();
+            final frontAlpha = dxAbs < _kThreshold * 1.8
                 ? 1.0
-                : _l(1.0, 0.0, (t - 0.55) / 0.45);
+                : _l(1.0, 0.0,
+                    ((dxAbs - _kThreshold * 1.8) / (_kThreshold * 1.2))
+                        .clamp(0.0, 1.0));
 
             return Transform.translate(
               offset: Offset(0, float),
@@ -790,7 +867,8 @@ class _Step2IllustrationState extends State<_Step2Illustration>
                         angle: backAngle,
                         child: Opacity(
                           opacity: backAlpha.clamp(0.0, 1.0),
-                          child: _MateProfileCard(profile: backP),
+                          child: _MateProfileCard(
+                              profile: _kMates[(_topIdx + 2) % _kMates.length]),
                         ),
                       ),
                     ),
@@ -802,30 +880,32 @@ class _Step2IllustrationState extends State<_Step2Illustration>
                         angle: midAngle,
                         child: Opacity(
                           opacity: midAlpha.clamp(0.0, 1.0),
-                          child: _MateProfileCard(profile: midP),
+                          child: _MateProfileCard(
+                              profile: _kMates[(_topIdx + 1) % _kMates.length]),
                         ),
                       ),
                     ),
-                    // ── Front card — tap to swipe right ───────────────────────
+                    // ── Front card — drag to swipe (or tap) ───────────────────
                     Positioned(
-                      top: 0,
-                      left: 20 + frontDx,
+                      top: live.dy,
+                      left: 20 + live.dx,
                       child: GestureDetector(
-                        onTap: _swipeRight,
-                        onHorizontalDragEnd: (d) {
-                          if ((d.primaryVelocity ?? 0) > 80) _swipeRight();
-                        },
+                        onTap: _onTap,
+                        onPanStart: _onPanStart,
+                        onPanUpdate: _onPanUpdate,
+                        onPanEnd: _onPanEnd,
                         behavior: HitTestBehavior.opaque,
                         child: Transform.rotate(
                           angle: frontAngle,
                           child: Opacity(
                             opacity: frontAlpha.clamp(0.0, 1.0),
-                            child: _MateProfileCard(profile: frontP),
+                            child: _MateProfileCard(
+                                profile: _kMates[_topIdx % _kMates.length]),
                           ),
                         ),
                       ),
                     ),
-                    // ── Pulsing heart badge (top-right) ──────────────────────
+                    // ── Pulsing heart badge ───────────────────────────────────
                     Positioned(
                       top: -14,
                       right: 0,
