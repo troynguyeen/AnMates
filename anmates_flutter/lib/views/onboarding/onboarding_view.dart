@@ -634,7 +634,24 @@ class _Step2Page extends StatelessWidget {
   }
 }
 
-// ─── Screen 03 Illustration — animated Mate profile card stack ───────────────
+// ─── Mock mate profiles (Screen 03 Social Proof) ────────────────────────────
+class _MateProfile {
+  final String name;
+  final int age;
+  final List<String> chips;
+  const _MateProfile(this.name, this.age, this.chips);
+}
+
+const _kMates = [
+  _MateProfile('Vy', 24, ['🌶️ Cay 3', '💬 Tám']),
+  _MateProfile('Minh', 22, ['🍜 Mì cay', '🎮 Gaming']),
+  _MateProfile('Linh', 26, ['☕ Cafe', '📚 Sách']),
+  _MateProfile('Nam', 25, ['🍖 Nướng', '🏃 Chạy bộ']),
+  _MateProfile('Hà', 23, ['🌮 Ăn vặt', '🎵 Nhạc']),
+  _MateProfile('Tuấn', 27, ['🍣 Sushi', '📷 Ảnh']),
+];
+
+// ─── Screen 03 Illustration — Tinder-style swipeable card stack ──────────────
 class _Step2Illustration extends StatefulWidget {
   const _Step2Illustration();
 
@@ -644,28 +661,34 @@ class _Step2Illustration extends StatefulWidget {
 
 class _Step2IllustrationState extends State<_Step2Illustration>
     with TickerProviderStateMixin {
-  // Entry: fade + slide-up
+  // Entry: fade + slide-up (plays once on mount)
   late final AnimationController _entryCtrl;
   late final Animation<double> _entryFade;
   late final Animation<Offset> _entrySlide;
-  // Ambient float
+  // Ambient float (whole stack bobs up/down)
   late final AnimationController _floatCtrl;
   late final Animation<double> _floatAnim;
-  // Heart pulse
+  // Heart badge pulse
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
+  // Swipe-out: tap front card → flies right, back cards promote
+  late final AnimationController _swipeCtrl;
+
+  int _topIdx = 0; // current front-card index into _kMates
+  bool _isSwiping = false;
 
   @override
   void initState() {
     super.initState();
+
     _entryCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 700));
     _entryFade =
         CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut);
     _entrySlide = Tween<Offset>(
             begin: const Offset(0, 0.14), end: Offset.zero)
-        .animate(
-            CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
+        .animate(CurvedAnimation(
+            parent: _entryCtrl, curve: Curves.easeOutCubic));
 
     _floatCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 3000));
@@ -676,6 +699,9 @@ class _Step2IllustrationState extends State<_Step2Illustration>
         vsync: this, duration: const Duration(milliseconds: 1300));
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
         CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+
+    _swipeCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
 
     Future.delayed(const Duration(milliseconds: 180), () {
       if (!mounted) return;
@@ -690,8 +716,26 @@ class _Step2IllustrationState extends State<_Step2Illustration>
     _entryCtrl.dispose();
     _floatCtrl.dispose();
     _pulseCtrl.dispose();
+    _swipeCtrl.dispose();
     super.dispose();
   }
+
+  Future<void> _swipeRight() async {
+    if (_isSwiping) return;
+    setState(() => _isSwiping = true);
+    _floatCtrl.stop(); // freeze float while card flies
+    await _swipeCtrl.forward();
+    if (!mounted) return;
+    setState(() {
+      _topIdx = (_topIdx + 1) % _kMates.length;
+      _isSwiping = false;
+    });
+    _swipeCtrl.reset();
+    _floatCtrl.repeat(reverse: true); // resume float
+  }
+
+  // Linear interpolation helper
+  static double _l(double a, double b, double t) => a + (b - a) * t;
 
   @override
   Widget build(BuildContext context) {
@@ -700,81 +744,121 @@ class _Step2IllustrationState extends State<_Step2Illustration>
       child: SlideTransition(
         position: _entrySlide,
         child: AnimatedBuilder(
-          animation: _floatAnim,
-          builder: (_, child) => Transform.translate(
-            offset: Offset(0, _floatAnim.value),
-            child: child,
-          ),
-          child: SizedBox(
-            width: 240,
-            height: 310,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // ── Back card 2 (furthest, rotated left) ─────────────────────
-                Positioned(
-                  top: 18,
-                  left: 0,
-                  child: Transform.rotate(
-                    angle: -9 * math.pi / 180,
-                    child: Opacity(
-                      opacity: 0.50,
-                      child: _MateProfileCard(index: 2),
-                    ),
-                  ),
-                ),
-                // ── Back card 1 (rotated right) ──────────────────────────────
-                Positioned(
-                  top: 10,
-                  left: 12,
-                  child: Transform.rotate(
-                    angle: 5 * math.pi / 180,
-                    child: Opacity(
-                      opacity: 0.75,
-                      child: _MateProfileCard(index: 1),
-                    ),
-                  ),
-                ),
-                // ── Front card (upright) ──────────────────────────────────────
-                Positioned(
-                  top: 0,
-                  left: 20,
-                  child: _MateProfileCard(index: 0),
-                ),
-                // ── Heart badge (pulsing, top-right of stack) ─────────────────
-                Positioned(
-                  top: -14,
-                  right: 0,
-                  child: AnimatedBuilder(
-                    animation: _pulseAnim,
-                    builder: (_, child) =>
-                        Transform.scale(scale: _pulseAnim.value, child: child),
-                    child: Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [AppColors.berry, AppColors.berryDeep],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+          animation: Listenable.merge([_floatCtrl, _swipeCtrl, _pulseCtrl]),
+          builder: (_, _) {
+            final t  = _swipeCtrl.value; // 0 → 1 during swipe
+            final te = Curves.easeInCubic.transform(t); // eased for dx
+            final float = _isSwiping ? 0.0 : _floatAnim.value;
+
+            // Profiles visible at each layer
+            final frontP = _kMates[_topIdx % _kMates.length];
+            final midP   = _kMates[(_topIdx + 1) % _kMates.length];
+            final backP  = _kMates[(_topIdx + 2) % _kMates.length];
+
+            // ── Back card: back_pos → mid_pos as t goes 0→1
+            final backAngle = _l(-9, 5, t) * math.pi / 180;
+            final backTop   = _l(18, 10, t);
+            final backLeft  = _l(0, 12, t);
+            final backAlpha = _l(0.50, 0.75, t);
+
+            // ── Mid card: mid_pos → front_pos
+            final midAngle = _l(5, 0, t) * math.pi / 180;
+            final midTop   = _l(10, 0, t);
+            final midLeft  = _l(12, 20, t);
+            final midAlpha = _l(0.75, 1.0, t);
+
+            // ── Front card: translate right + rotate CW + fade near end
+            final frontDx    = _l(0, 430, te);
+            final frontAngle = _l(0, 22, t) * math.pi / 180;
+            final frontAlpha = t < 0.55
+                ? 1.0
+                : _l(1.0, 0.0, (t - 0.55) / 0.45);
+
+            return Transform.translate(
+              offset: Offset(0, float),
+              child: SizedBox(
+                width: 240,
+                height: 310,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // ── Back card ─────────────────────────────────────────────
+                    Positioned(
+                      top: backTop,
+                      left: backLeft,
+                      child: Transform.rotate(
+                        angle: backAngle,
+                        child: Opacity(
+                          opacity: backAlpha.clamp(0.0, 1.0),
+                          child: _MateProfileCard(profile: backP),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.berry.withValues(alpha: 0.45),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
                       ),
-                      child: const Icon(Icons.favorite,
-                          color: Colors.white, size: 28),
                     ),
-                  ),
+                    // ── Mid card ──────────────────────────────────────────────
+                    Positioned(
+                      top: midTop,
+                      left: midLeft,
+                      child: Transform.rotate(
+                        angle: midAngle,
+                        child: Opacity(
+                          opacity: midAlpha.clamp(0.0, 1.0),
+                          child: _MateProfileCard(profile: midP),
+                        ),
+                      ),
+                    ),
+                    // ── Front card — tap to swipe right ───────────────────────
+                    Positioned(
+                      top: 0,
+                      left: 20 + frontDx,
+                      child: GestureDetector(
+                        onTap: _swipeRight,
+                        onHorizontalDragEnd: (d) {
+                          if ((d.primaryVelocity ?? 0) > 80) _swipeRight();
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Transform.rotate(
+                          angle: frontAngle,
+                          child: Opacity(
+                            opacity: frontAlpha.clamp(0.0, 1.0),
+                            child: _MateProfileCard(profile: frontP),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // ── Pulsing heart badge (top-right) ──────────────────────
+                    Positioned(
+                      top: -14,
+                      right: 0,
+                      child: Transform.scale(
+                        scale: _pulseAnim.value,
+                        child: Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [AppColors.berry, AppColors.berryDeep],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.berry.withValues(alpha: 0.45),
+                                blurRadius: 18,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.favorite,
+                              color: Colors.white, size: 28),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -783,8 +867,8 @@ class _Step2IllustrationState extends State<_Step2Illustration>
 
 // ─── Mate profile card (photo area + name + chips) ───────────────────────────
 class _MateProfileCard extends StatelessWidget {
-  final int index;
-  const _MateProfileCard({required this.index});
+  final _MateProfile profile;
+  const _MateProfileCard({required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -822,7 +906,7 @@ class _MateProfileCard extends StatelessWidget {
                   CustomPaint(painter: _DiagonalStripesPainter()),
                   Center(
                     child: Text(
-                      'MATE 0${index + 1}',
+                      profile.name.toUpperCase(),
                       style: AppTextStyles.mono(
                         size: 11,
                         weight: FontWeight.w600,
@@ -837,13 +921,12 @@ class _MateProfileCard extends StatelessWidget {
           ),
           // ── Info area ─────────────────────────────────────────────────────
           Padding(
-            padding:
-                const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Vy, 24',
+                  '${profile.name}, ${profile.age}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -853,10 +936,11 @@ class _MateProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Row(
-                  children: const [
-                    _InfoChip('🌶️ Cay 3'),
-                    SizedBox(width: 6),
-                    _InfoChip('💬 Tám'),
+                  children: [
+                    for (int i = 0; i < profile.chips.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 6),
+                      _InfoChip(profile.chips[i]),
+                    ],
                   ],
                 ),
               ],
