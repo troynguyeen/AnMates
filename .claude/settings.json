@@ -5,7 +5,10 @@
       "mcp__claude_ai_Atlassian_Rovo__getVisibleJiraProjects",
       "mcp__claude_ai_Atlassian_Rovo__createJiraIssue",
       "mcp__claude_ai_Atlassian_Rovo__getJiraIssue",
-      "mcp__claude_ai_Atlassian_Rovo__addCommentToJiraIssue"
+      "mcp__claude_ai_Atlassian_Rovo__addCommentToJiraIssue",
+      "PowerShell(netstat -ano)",
+      "Bash(cd /tmp)",
+      "Bash(npm install *)"
     ]
   }
 }

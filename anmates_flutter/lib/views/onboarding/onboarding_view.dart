@@ -21,7 +21,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   final _pageController = PageController();
   int _currentPage = 0;
 
-  static const int _totalPages = 3;
+  static const int _totalPages = 4;
 
   void _nextPage() {
     if (_currentPage < _totalPages - 1) {
@@ -86,7 +86,7 @@ class _OnboardingViewState extends State<OnboardingView> {
               controller: _pageController,
               physics: const BouncingScrollPhysics(),
               onPageChanged: (i) => setState(() => _currentPage = i),
-              children: const [_Step1Page(), _Step2Page(), _Step3Page()],
+              children: const [_Step1Page(), _Step2Page(), _Step3Page(), _Step4Page()],
             ),
           ),
           // Top bar overlay
@@ -1129,6 +1129,510 @@ class _DiagonalStripesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DiagonalStripesPainter _) => false;
+}
+
+// ─── Step 4: Định vị nền (ETA Maps) ──────────────────────────────────────────
+class _Step4Page extends StatelessWidget {
+  const _Step4Page();
+
+  @override
+  Widget build(BuildContext context) {
+    return _StepLayout(
+      backgroundColor: const Color(0xFFFDF2F0),
+      eyebrow: '04 · Định vị nền',
+      title: 'Bật định vị nền\nđể gặp Mates an toàn.',
+      body:
+          'Chỉ chạy 45 phút trước giờ hẹn — xác minh cả hai đang trên đường. Không bao giờ chia sẻ vị trí thô.',
+      illustration: const _Step4Illustration(),
+    );
+  }
+}
+
+// ─── Step 4 Illustration: glow pin + animated ETA map card ───────────────────
+class _Step4Illustration extends StatefulWidget {
+  const _Step4Illustration();
+
+  @override
+  State<_Step4Illustration> createState() => _Step4IllustrationState();
+}
+
+class _Step4IllustrationState extends State<_Step4Illustration>
+    with TickerProviderStateMixin {
+  // ── Pin glow blink (repeating) ─────────────────────────────────────────────
+  late final AnimationController _glowCtrl;
+  late final Animation<double> _glowAnim;
+
+  // ── Pin icon drop-in (one-shot) ────────────────────────────────────────────
+  late final AnimationController _pinCtrl;
+  late final Animation<double> _pinScale;
+  late final Animation<double> _pinFade;
+
+  // ── Map card entry: fade + slide-up (one-shot) ────────────────────────────
+  late final AnimationController _cardCtrl;
+  late final Animation<double> _cardFade;
+  late final Animation<double> _cardSlide;
+
+  // ── Dashed line draw-in (one-shot, triggers after card settled) ───────────
+  late final AnimationController _lineCtrl;
+  late final Animation<double> _lineProgress;
+
+  // ── Destination dot pulse (repeating, starts after line finishes) ─────────
+  late final AnimationController _destPulseCtrl;
+  late final Animation<double> _destPulse;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Glow blink: slow breathe in/out, 2.4 s period
+    _glowCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400));
+    _glowAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
+
+    // Pin bouncy entry
+    _pinCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 680));
+    _pinScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _pinCtrl, curve: Curves.elasticOut));
+    _pinFade = CurvedAnimation(
+        parent: _pinCtrl,
+        curve: const Interval(0.0, 0.38, curve: Curves.easeOut));
+
+    // Card slides up from below
+    _cardCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 540));
+    _cardFade = CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOut);
+    _cardSlide = Tween<double>(begin: 32.0, end: 0.0).animate(
+        CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOutCubic));
+
+    // Line draws itself in (left to right feel)
+    _lineCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 980));
+    _lineProgress = CurvedAnimation(parent: _lineCtrl, curve: Curves.easeInOut);
+
+    // Destination dot pulses after arrival
+    _destPulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1350));
+    _destPulse = Tween<double>(begin: 1.0, end: 1.40).animate(
+        CurvedAnimation(parent: _destPulseCtrl, curve: Curves.easeInOut));
+
+    // ── Staggered sequence ──────────────────────────────────────────────────
+    Future.delayed(const Duration(milliseconds: 140), () {
+      if (!mounted) return;
+      _pinCtrl.forward().then((_) {
+        if (!mounted) return;
+        // Start glow as soon as pin lands
+        _glowCtrl.repeat(reverse: true);
+        Future.delayed(const Duration(milliseconds: 160), () {
+          if (!mounted) return;
+          _cardCtrl.forward().then((_) {
+            if (!mounted) return;
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (!mounted) return;
+              _lineCtrl.forward().then((_) {
+                if (!mounted) return;
+                _destPulseCtrl.repeat(reverse: true);
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _glowCtrl.dispose();
+    _pinCtrl.dispose();
+    _cardCtrl.dispose();
+    _lineCtrl.dispose();
+    _destPulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge(
+          [_glowCtrl, _pinCtrl, _cardCtrl, _lineCtrl, _destPulseCtrl]),
+      builder: (_, _) {
+        return SizedBox(
+          width: 280,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Glowing location pin icon ───────────────────────────────
+              Opacity(
+                opacity: _pinFade.value.clamp(0.0, 1.0),
+                child: Transform.scale(
+                  scale: _pinScale.value,
+                  child: _GlowLocationPin(glowT: _glowAnim.value),
+                ),
+              ),
+              const SizedBox(height: 22),
+              // ── ETA Map card ─────────────────────────────────────────────
+              Opacity(
+                opacity: _cardFade.value.clamp(0.0, 1.0),
+                child: Transform.translate(
+                  offset: Offset(0, _cardSlide.value),
+                  child: _EtaMapCard(
+                    lineProgress: _lineProgress.value,
+                    destPulse: _destPulse.value,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Location pin with pulsing glow rings ────────────────────────────────────
+class _GlowLocationPin extends StatelessWidget {
+  /// 0→1 blink cycle value from AnimationController
+  final double glowT;
+  const _GlowLocationPin({required this.glowT});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outermost glow ring — large, very translucent
+        Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.berry.withValues(alpha: glowT * 0.12),
+          ),
+        ),
+        // Middle glow ring
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.berry.withValues(alpha: glowT * 0.20),
+          ),
+        ),
+        // Pin icon — rounded square, berry→wisteria gradient
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [AppColors.berry, AppColors.wisteria],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.berry.withValues(alpha: 0.30 + glowT * 0.30),
+                blurRadius: 14 + glowT * 20,
+                offset: const Offset(0, 5),
+                spreadRadius: glowT * 3,
+              ),
+              BoxShadow(
+                color:
+                    AppColors.wisteria.withValues(alpha: 0.12 + glowT * 0.16),
+                blurRadius: 8 + glowT * 14,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.location_on_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── ETA Map Card: dark bg + dashed route + dots + labels ───────────────────
+class _EtaMapCard extends StatelessWidget {
+  final double lineProgress; // 0→1 as line draws in
+  final double destPulse;    // 1→1.4 pulsing after arrival
+
+  const _EtaMapCard({
+    required this.lineProgress,
+    required this.destPulse,
+  });
+
+  static const double _cardW = 280;
+  static const double _cardH = 118;
+
+  // Dot positions within the dark card (card-local coordinates)
+  // BẠN (you) — lower-left; destination — upper-right
+  static const Offset _purplePt = Offset(52, 84);
+  static const Offset _pinkPt   = Offset(228, 34);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Dark map card ─────────────────────────────────────────────────
+        Container(
+          width: _cardW,
+          height: _cardH,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: const Color(0xFF181828),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.38),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Stack(
+              children: [
+                // Grid backdrop
+                CustomPaint(
+                  size: const Size(_cardW, _cardH),
+                  painter: _MapGridPainter(),
+                ),
+                // Animated dashed line
+                CustomPaint(
+                  size: const Size(_cardW, _cardH),
+                  painter: _DashedRoutePainter(
+                    start: _purplePt,
+                    end: _pinkPt,
+                    progress: lineProgress,
+                  ),
+                ),
+                // Purple dot — BẠN (origin)
+                Positioned(
+                  left: _purplePt.dx - 9,
+                  top: _purplePt.dy - 9,
+                  child: _RouteDot(
+                    color: AppColors.wisteria,
+                    pulseScale: 1.0,
+                  ),
+                ),
+                // Pink dot — destination (pulses on arrival)
+                Positioned(
+                  left: _pinkPt.dx - 9,
+                  top: _pinkPt.dy - 9,
+                  child: Opacity(
+                    opacity: lineProgress.clamp(0.0, 1.0),
+                    child: _RouteDot(
+                      color: AppColors.berry,
+                      pulseScale: lineProgress >= 0.95 ? destPulse : 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // ── Labels row beneath the card ───────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left: you
+              _RouteLabel(
+                dot: AppColors.wisteria,
+                title: 'BẠN',
+                subtitle: 'ETA 12 phút',
+                alignRight: false,
+              ),
+              // Right: destination
+              _RouteLabel(
+                dot: AppColors.berry,
+                title: 'HAIDILAO Q.1',
+                subtitle: 'Hẹn 19:00',
+                alignRight: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Map grid backdrop ────────────────────────────────────────────────────────
+class _MapGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.055)
+      ..strokeWidth = 1.0;
+
+    // Horizontal lines
+    for (double y = 0; y < size.height; y += 22) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    // Vertical lines
+    for (double x = 0; x < size.width; x += 28) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MapGridPainter _) => false;
+}
+
+// ─── Dashed route line (draws in from start→end per progress 0→1) ─────────
+class _DashedRoutePainter extends CustomPainter {
+  final Offset start;
+  final Offset end;
+  final double progress; // 0→1
+
+  const _DashedRoutePainter({
+    required this.start,
+    required this.end,
+    required this.progress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+
+    final vec = end - start;
+    final totalLen = vec.distance;
+    if (totalLen == 0) return;
+
+    final dir = vec / totalLen;
+    final drawnLen = totalLen * progress;
+
+    const dashLen = 7.0;
+    const gapLen  = 5.0;
+    const pattern = dashLen + gapLen;
+
+    final paint = Paint()
+      ..color = AppColors.berry.withValues(alpha: 0.88)
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    double d = 0;
+    while (d < drawnLen) {
+      final s = start + dir * d;
+      final e = start + dir * math.min(d + dashLen, drawnLen);
+      canvas.drawLine(s, e, paint);
+      d += pattern;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRoutePainter old) =>
+      old.progress != progress || old.start != start || old.end != end;
+}
+
+// ─── Route dot (pulsing ring + solid core) ───────────────────────────────────
+class _RouteDot extends StatelessWidget {
+  final Color color;
+  final double pulseScale;
+  const _RouteDot({required this.color, this.pulseScale = 1.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.scale(
+      scale: pulseScale,
+      alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Glow halo ring
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.28),
+            ),
+          ),
+          // Bright core
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.65),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Route label (dot indicator + title + subtitle) ──────────────────────────
+class _RouteLabel extends StatelessWidget {
+  final Color dot;
+  final String title;
+  final String subtitle;
+  final bool alignRight;
+
+  const _RouteLabel({
+    required this.dot,
+    required this.title,
+    required this.subtitle,
+    required this.alignRight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dotWidget = Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: dot),
+    );
+
+    final textCol = Column(
+      crossAxisAlignment:
+          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          subtitle,
+          style: GoogleFonts.beVietnamPro(
+            fontSize: 10,
+            color: AppColors.ink50,
+          ),
+        ),
+      ],
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: alignRight
+          ? [textCol, const SizedBox(width: 6), dotWidget]
+          : [dotWidget, const SizedBox(width: 6), textCol],
+    );
+  }
 }
 
 // ─── Swipe direction badge (LIKE / NOPE) ─────────────────────────────────────
