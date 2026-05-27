@@ -210,6 +210,8 @@ class _StepLayout extends StatelessWidget {
   final String title;
   final String body;
   final Widget illustration;
+  /// Override heading color — default Caviar Ink; use AppColors.ocean for social-proof screen.
+  final Color titleColor;
 
   const _StepLayout({
     required this.backgroundColor,
@@ -217,6 +219,7 @@ class _StepLayout extends StatelessWidget {
     required this.title,
     required this.body,
     required this.illustration,
+    this.titleColor = AppColors.ink,
   });
 
   @override
@@ -264,14 +267,16 @@ class _StepLayout extends StatelessWidget {
               children: [
                 Eyebrow(eyebrow),
                 SizedBox(height: isCompact ? 8 : 10),
+                // H1: Plus Jakarta Sans w700 lh1.2 per design-system.md
+                // titleColor: default AppColors.ink; AppColors.ocean for Screen 03 Social Proof
                 Text(
                   title,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: titleSize,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                    height: 1.15,
-                    letterSpacing: -1.2,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                    height: 1.2,
+                    letterSpacing: -1.0,
                   ),
                 ),
                 SizedBox(height: isCompact ? 10 : 12),
@@ -616,7 +621,9 @@ class _Step2Page extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StepLayout(
-      backgroundColor: const Color(0xFFFAF1F5),
+      // Design spec: Mint Cream #F1FFF8 background + Ocean Twilight #534BA8 headline
+      backgroundColor: AppColors.mint,
+      titleColor: AppColors.ocean,
       eyebrow: '02 · Match cùng quán',
       title: 'Ai cũng đang\nthèm quán này?',
       body:
