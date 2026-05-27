@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -621,66 +622,244 @@ class _Step2Page extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StepLayout(
-      // Design spec: Mint Cream #F1FFF8 background + Ocean Twilight #534BA8 headline
-      backgroundColor: AppColors.mint,
+      // Design spec: Berry Tint #FAF1F5 bg + Ocean Twilight heading
+      backgroundColor: AppColors.berryTint,
       titleColor: AppColors.ocean,
       eyebrow: '02 · Match cùng quán',
       title: 'Ai cũng đang\nthèm quán này?',
       body:
-          'Xem ai trong vùng đang đói cùng món. Ghép Mate, hẹn bàn, chia bill — không còn ăn một mình.',
+          '15 người quanh đây cũng vừa chọn quán giống bạn. Quét phải để gửi lời mời đi ăn cùng — không phải hẹn hò.',
       illustration: const _Step2Illustration(),
     );
   }
 }
 
-class _Step2Illustration extends StatelessWidget {
+// ─── Screen 03 Illustration — animated Mate profile card stack ───────────────
+class _Step2Illustration extends StatefulWidget {
   const _Step2Illustration();
 
   @override
+  State<_Step2Illustration> createState() => _Step2IllustrationState();
+}
+
+class _Step2IllustrationState extends State<_Step2Illustration>
+    with TickerProviderStateMixin {
+  // Entry: fade + slide-up
+  late final AnimationController _entryCtrl;
+  late final Animation<double> _entryFade;
+  late final Animation<Offset> _entrySlide;
+  // Ambient float
+  late final AnimationController _floatCtrl;
+  late final Animation<double> _floatAnim;
+  // Heart pulse
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _entryCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _entryFade =
+        CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut);
+    _entrySlide = Tween<Offset>(
+            begin: const Offset(0, 0.14), end: Offset.zero)
+        .animate(
+            CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
+
+    _floatCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 3000));
+    _floatAnim = Tween<double>(begin: -7.0, end: 7.0).animate(
+        CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
+
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1300));
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.14).animate(
+        CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (!mounted) return;
+      _entryCtrl.forward();
+      _floatCtrl.repeat(reverse: true);
+      _pulseCtrl.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _entryCtrl.dispose();
+    _floatCtrl.dispose();
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
-      height: 220,
-      child: Stack(
-        alignment: Alignment.center,
+    return FadeTransition(
+      opacity: _entryFade,
+      child: SlideTransition(
+        position: _entrySlide,
+        child: AnimatedBuilder(
+          animation: _floatAnim,
+          builder: (_, child) => Transform.translate(
+            offset: Offset(0, _floatAnim.value),
+            child: child,
+          ),
+          child: SizedBox(
+            width: 240,
+            height: 310,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // ── Back card 2 (furthest, rotated left) ─────────────────────
+                Positioned(
+                  top: 18,
+                  left: 0,
+                  child: Transform.rotate(
+                    angle: -9 * math.pi / 180,
+                    child: Opacity(
+                      opacity: 0.50,
+                      child: _MateProfileCard(index: 2),
+                    ),
+                  ),
+                ),
+                // ── Back card 1 (rotated right) ──────────────────────────────
+                Positioned(
+                  top: 10,
+                  left: 12,
+                  child: Transform.rotate(
+                    angle: 5 * math.pi / 180,
+                    child: Opacity(
+                      opacity: 0.75,
+                      child: _MateProfileCard(index: 1),
+                    ),
+                  ),
+                ),
+                // ── Front card (upright) ──────────────────────────────────────
+                Positioned(
+                  top: 0,
+                  left: 20,
+                  child: _MateProfileCard(index: 0),
+                ),
+                // ── Heart badge (pulsing, top-right of stack) ─────────────────
+                Positioned(
+                  top: -14,
+                  right: 0,
+                  child: AnimatedBuilder(
+                    animation: _pulseAnim,
+                    builder: (_, child) =>
+                        Transform.scale(scale: _pulseAnim.value, child: child),
+                    child: Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [AppColors.berry, AppColors.berryDeep],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.berry.withValues(alpha: 0.45),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.favorite,
+                          color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Mate profile card (photo area + name + chips) ───────────────────────────
+class _MateProfileCard extends StatelessWidget {
+  final int index;
+  const _MateProfileCard({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 196,
+      height: 268,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.berry.withValues(alpha: 0.12),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+          const BoxShadow(
+            color: AppColors.ink10,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stacked mate cards
-          Positioned(
-            top: 30,
-            child: Transform.rotate(
-              angle: -6 * 3.14159 / 180,
-              child: _MateCard(hue: 2),
-            ),
-          ),
-          Positioned(
-            top: 15,
-            child: Transform.rotate(
-              angle: 4 * 3.14159 / 180,
-              child: _MateCard(hue: 1),
-            ),
-          ),
-          Positioned(top: 0, child: _MateCard(hue: 0)),
-          // Berry heart badge
-          Positioned(
-            top: 0,
-            right: 20,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.berry,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.berry.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+          // ── Photo area with diagonal stripes ─────────────────────────────
+          Expanded(
+            flex: 11,
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(painter: _DiagonalStripesPainter()),
+                  Center(
+                    child: Text(
+                      'MATE 0${index + 1}',
+                      style: AppTextStyles.mono(
+                        size: 11,
+                        weight: FontWeight.w600,
+                        color: AppColors.wisteria.withValues(alpha: 0.8),
+                        letterSpacing: 2.0,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: const Center(
-                child: Icon(Icons.favorite, color: Colors.white, size: 20),
-              ),
+            ),
+          ),
+          // ── Info area ─────────────────────────────────────────────────────
+          Padding(
+            padding:
+                const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vy, 24',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Row(
+                  children: const [
+                    _InfoChip('🌶️ Cay 3'),
+                    SizedBox(width: 6),
+                    _InfoChip('💬 Tám'),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -689,77 +868,59 @@ class _Step2Illustration extends StatelessWidget {
   }
 }
 
-class _MateCard extends StatelessWidget {
-  final int hue;
-  const _MateCard({required this.hue});
+// ─── Small info chip inside profile card ─────────────────────────────────────
+class _InfoChip extends StatelessWidget {
+  final String label;
+  const _InfoChip(this.label);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220,
-      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink10,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.berry.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+            color: AppColors.berry.withValues(alpha: 0.18), width: 1),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            AnmAvatar(size: 48, hue: hue),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    height: 10,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: AppColors.ink10,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 8,
-                    width: 110,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: AppColors.ink10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.berry.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Mate',
-                style: GoogleFonts.beVietnamPro(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.berry,
-                ),
-              ),
-            ),
-          ],
+      child: Text(
+        label,
+        style: GoogleFonts.beVietnamPro(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.ink70,
         ),
       ),
     );
   }
+}
+
+// ─── Diagonal stripe painter (photo placeholder) ─────────────────────────────
+class _DiagonalStripesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Background
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = AppColors.berryTint,
+    );
+    // Diagonal stripes
+    final stripePaint = Paint()
+      ..color = AppColors.wisteria.withValues(alpha: 0.20)
+      ..strokeWidth = 20
+      ..style = PaintingStyle.stroke;
+    final span = size.width + size.height;
+    for (double x = -size.height; x < span; x += 32) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        stripePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DiagonalStripesPainter _) => false;
 }
 
 // ─── Step 3 ───────────────────────────────────────────────────────────────────
