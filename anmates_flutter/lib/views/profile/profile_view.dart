@@ -128,10 +128,7 @@ class _AvatarInfoRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Designer · Quận 1 · 🇻🇳',
-                  style: AppTextStyles.body(
-                    size: 13,
-                    color: AppColors.ink70,
-                  ),
+                  style: AppTextStyles.body(size: 13, color: AppColors.ink70),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -498,12 +495,42 @@ class _FoodPrefsSection extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              AnmChip(label: '🌶️ Cay 3', active: true, color: AppColors.berry, sm: true),
-              AnmChip(label: '🥩 Beef', active: true, color: AppColors.ocean, sm: true),
-              AnmChip(label: '🦐 Hải sản', active: true, color: AppColors.wisteria, sm: true),
-              AnmChip(label: '🚫 Không hành', active: true, color: AppColors.glaucous, sm: true),
-              AnmChip(label: '☕ Cafe đen', active: true, color: AppColors.berryDeep, sm: true),
-              AnmChip(label: '🍣 Sushi', active: true, color: AppColors.ocean, sm: true),
+              AnmChip(
+                label: '🌶️ Cay 3',
+                active: true,
+                color: AppColors.berry,
+                sm: true,
+              ),
+              AnmChip(
+                label: '🥩 Beef',
+                active: true,
+                color: AppColors.ocean,
+                sm: true,
+              ),
+              AnmChip(
+                label: '🦐 Hải sản',
+                active: true,
+                color: AppColors.wisteria,
+                sm: true,
+              ),
+              AnmChip(
+                label: '🚫 Không hành',
+                active: true,
+                color: AppColors.glaucous,
+                sm: true,
+              ),
+              AnmChip(
+                label: '☕ Cafe đen',
+                active: true,
+                color: AppColors.berryDeep,
+                sm: true,
+              ),
+              AnmChip(
+                label: '🍣 Sushi',
+                active: true,
+                color: AppColors.ocean,
+                sm: true,
+              ),
             ],
           ),
         ],
@@ -608,7 +635,10 @@ class _CurrentPlanBanner extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1,
+              ),
             ),
             child: const Center(
               child: Text('👑', style: TextStyle(fontSize: 22)),
@@ -658,7 +688,10 @@ class _CurrentPlanBanner extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.4),
+                width: 1,
+              ),
             ),
             child: Text(
               'Active',
@@ -706,9 +739,7 @@ class _TierRow extends StatelessWidget {
         gradient: gradient,
         color: hasBg ? null : AppColors.mint,
         borderRadius: BorderRadius.circular(16),
-        border: hasBg
-            ? null
-            : Border.all(color: AppColors.ink10, width: 1.5),
+        border: hasBg ? null : Border.all(color: AppColors.ink10, width: 1.5),
         boxShadow: hasBg
             ? [
                 BoxShadow(
@@ -782,7 +813,10 @@ class _TierRow extends StatelessWidget {
               GestureDetector(
                 onTap: () {},
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: buttonStyle == _TierButtonStyle.whiteSolid
                         ? Colors.white

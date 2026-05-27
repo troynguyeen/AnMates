@@ -73,7 +73,10 @@ class InvitePartnerSheet extends StatelessWidget {
                       ),
                     ),
                     child: Center(
-                      child: Text(user.emoji, style: const TextStyle(fontSize: 20)),
+                      child: Text(
+                        user.emoji,
+                        style: const TextStyle(fontSize: 20),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -91,7 +94,10 @@ class InvitePartnerSheet extends StatelessWidget {
                         ),
                         Text(
                           '${user.vibeScore}% Vibe Match',
-                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -99,7 +105,10 @@ class InvitePartnerSheet extends StatelessWidget {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.berry,
                         borderRadius: BorderRadius.circular(20),

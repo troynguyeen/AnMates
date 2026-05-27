@@ -14,8 +14,13 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
   int _rating = 5;
   final _reviewCtrl = TextEditingController();
   final List<String> _allTags = [
-    'Romantic 💕', 'Instagrammable 📸', 'Lively 🎉',
-    'Quiet 🤫', 'Foodie 🍜', 'Chill ☕', 'Music 🎵',
+    'Romantic 💕',
+    'Instagrammable 📸',
+    'Lively 🎉',
+    'Quiet 🤫',
+    'Foodie 🍜',
+    'Chill ☕',
+    'Music 🎵',
   ];
   final Set<String> _selectedTags = {};
 
@@ -67,7 +72,11 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
             // Rating
             const Text(
               'Đánh giá của bạn',
-              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             Row(
@@ -91,7 +100,11 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
             // Vibe tags
             const Text(
               'Vibe ở đây',
-              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -108,7 +121,10 @@ class _ReviewCheckinSheetState extends State<ReviewCheckinSheet> {
                         }
                       }),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: _selectedTags.contains(t)
                               ? AppColors.berry.withValues(alpha: 0.3)

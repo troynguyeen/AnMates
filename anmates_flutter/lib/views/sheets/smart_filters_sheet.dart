@@ -5,7 +5,11 @@ import '../../theme/app_theme.dart';
 class SmartFiltersSheet extends StatefulWidget {
   final PlaceFilter filter;
   final ValueChanged<PlaceFilter> onApply;
-  const SmartFiltersSheet({super.key, required this.filter, required this.onApply});
+  const SmartFiltersSheet({
+    super.key,
+    required this.filter,
+    required this.onApply,
+  });
 
   @override
   State<SmartFiltersSheet> createState() => _SmartFiltersSheetState();
@@ -102,7 +106,11 @@ class _SmartFiltersSheetState extends State<SmartFiltersSheet> {
             const SizedBox(height: 12),
             const Text(
               'Phù hợp với',
-              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -113,7 +121,10 @@ class _SmartFiltersSheetState extends State<SmartFiltersSheet> {
                     (o) => GestureDetector(
                       onTap: () => setState(() => _filter.suitableFor = o),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _filter.suitableFor == o
                               ? AppColors.berry.withValues(alpha: 0.3)
@@ -194,7 +205,10 @@ class _SliderRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
             const Spacer(),
             Text(
               '${value.toStringAsFixed(unit == 'km' ? 1 : 0)}$unit',

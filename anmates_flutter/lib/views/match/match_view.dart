@@ -88,10 +88,14 @@ class MatchView extends StatelessWidget {
                       width: double.infinity,
                       height: 56,
                       child: OutlinedButton(
-                        onPressed: onContinue ?? () => Navigator.maybePop(context),
+                        onPressed:
+                            onContinue ?? () => Navigator.maybePop(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white38, width: 1.5),
+                          side: const BorderSide(
+                            color: Colors.white38,
+                            width: 1.5,
+                          ),
                           shape: const StadiumBorder(),
                         ),
                         child: Text(
@@ -201,14 +205,14 @@ class MatchView extends StatelessWidget {
   List<Widget> _buildSparkles() {
     // (top, left_or_null, right_or_null, size, opacity)
     final configs = <(double, double?, double?, double, double)>[
-      (60.0,  24.0,  null,  18.0, 0.60),
-      (80.0,  80.0,  null,  10.0, 0.40),
-      (40.0,  null,  30.0,  22.0, 0.70),
-      (110.0, null,  70.0,  12.0, 0.45),
-      (200.0, 40.0,  null,  14.0, 0.35),
-      (240.0, null,  40.0,  16.0, 0.50),
-      (160.0, 160.0, null,   8.0, 0.30),
-      (300.0, null,  20.0,  20.0, 0.40),
+      (60.0, 24.0, null, 18.0, 0.60),
+      (80.0, 80.0, null, 10.0, 0.40),
+      (40.0, null, 30.0, 22.0, 0.70),
+      (110.0, null, 70.0, 12.0, 0.45),
+      (200.0, 40.0, null, 14.0, 0.35),
+      (240.0, null, 40.0, 16.0, 0.50),
+      (160.0, 160.0, null, 8.0, 0.30),
+      (300.0, null, 20.0, 20.0, 0.40),
     ];
 
     return configs.map((c) {

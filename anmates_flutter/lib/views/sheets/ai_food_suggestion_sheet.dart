@@ -84,7 +84,9 @@ class _AIFoodSuggestionSheetState extends State<AIFoodSuggestionSheet> {
                         height: 36,
                         margin: const EdgeInsets.only(left: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF00B894) : const Color(0xFF2D2D42),
+                          color: isSelected
+                              ? const Color(0xFF00B894)
+                              : const Color(0xFF2D2D42),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -116,7 +118,10 @@ class _AIFoodSuggestionSheetState extends State<AIFoodSuggestionSheet> {
                     onTap: () => setState(() => _mood = m),
                     child: Container(
                       margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? m.color.withValues(alpha: 0.3)
@@ -180,7 +185,10 @@ class _SuggestionCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   suggestion.estimatedPrice,
-                  style: const TextStyle(color: Color(0xFF00B894), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF00B894),
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

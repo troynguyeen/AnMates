@@ -85,11 +85,7 @@ class _OnboardingViewState extends State<OnboardingView> {
               controller: _pageController,
               physics: const BouncingScrollPhysics(),
               onPageChanged: (i) => setState(() => _currentPage = i),
-              children: const [
-                _Step1Page(),
-                _Step2Page(),
-                _Step3Page(),
-              ],
+              children: const [_Step1Page(), _Step2Page(), _Step3Page()],
             ),
           ),
           // Top bar overlay
@@ -449,25 +445,28 @@ class _FoodCardState extends State<_FoodCard> with TickerProviderStateMixin {
       vsync: this,
       duration: Duration(milliseconds: floatMs),
     );
-    _floatAnim = Tween<double>(begin: -4.0, end: 4.0).animate(
-      CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
-    );
+    _floatAnim = Tween<double>(
+      begin: -4.0,
+      end: 4.0,
+    ).animate(CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
 
     // Staggered drop-in entry
     _enterCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 720),
     );
-    _enterScale = Tween<double>(begin: 0.72, end: 1.0).animate(
-      CurvedAnimation(parent: _enterCtrl, curve: Curves.elasticOut),
-    );
+    _enterScale = Tween<double>(
+      begin: 0.72,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _enterCtrl, curve: Curves.elasticOut));
     _enterFade = CurvedAnimation(
       parent: _enterCtrl,
       curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
     );
-    _enterOffset = Tween<double>(begin: 36.0, end: 0.0).animate(
-      CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic),
-    );
+    _enterOffset = Tween<double>(
+      begin: 36.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _enterCtrl, curve: Curves.easeOutCubic));
 
     Future.delayed(Duration(milliseconds: widget.spec.delayMs), () {
       if (!mounted) return;
@@ -490,9 +489,14 @@ class _FoodCardState extends State<_FoodCard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     // Slightly straighten when hovered (snap to upright reads as "selecting")
-    final liveAngleDeg =
-        _hovered ? widget.spec.angleDeg * 0.35 : widget.spec.angleDeg;
-    final scale = _pressed ? 0.94 : _hovered ? 1.08 : 1.0;
+    final liveAngleDeg = _hovered
+        ? widget.spec.angleDeg * 0.35
+        : widget.spec.angleDeg;
+    final scale = _pressed
+        ? 0.94
+        : _hovered
+        ? 1.08
+        : 1.0;
 
     return AnimatedBuilder(
       animation: Listenable.merge([_floatCtrl, _enterCtrl]),
@@ -501,10 +505,7 @@ class _FoodCardState extends State<_FoodCard> with TickerProviderStateMixin {
           opacity: _enterFade.value,
           child: Transform.translate(
             offset: Offset(0, _floatAnim.value + _enterOffset.value),
-            child: Transform.scale(
-              scale: _enterScale.value,
-              child: child,
-            ),
+            child: Transform.scale(scale: _enterScale.value, child: child),
           ),
         );
       },
@@ -533,8 +534,9 @@ class _FoodCardState extends State<_FoodCard> with TickerProviderStateMixin {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: widget.spec.accent
-                          .withValues(alpha: _hovered ? 0.42 : 0.18),
+                      color: widget.spec.accent.withValues(
+                        alpha: _hovered ? 0.42 : 0.18,
+                      ),
                       blurRadius: _hovered ? 28 : 16,
                       offset: Offset(0, _hovered ? 14 : 8),
                     ),
@@ -617,7 +619,8 @@ class _Step2Page extends StatelessWidget {
       backgroundColor: const Color(0xFFFAF1F5),
       eyebrow: '02 · Match cùng quán',
       title: 'Ai cũng đang\nthèm quán này?',
-      body: 'Xem ai trong vùng đang đói cùng món. Ghép Mate, hẹn bàn, chia bill — không còn ăn một mình.',
+      body:
+          'Xem ai trong vùng đang đói cùng món. Ghép Mate, hẹn bàn, chia bill — không còn ăn một mình.',
       illustration: const _Step2Illustration(),
     );
   }
@@ -649,10 +652,7 @@ class _Step2Illustration extends StatelessWidget {
               child: _MateCard(hue: 1),
             ),
           ),
-          Positioned(
-            top: 0,
-            child: _MateCard(hue: 0),
-          ),
+          Positioned(top: 0, child: _MateCard(hue: 0)),
           // Berry heart badge
           Positioned(
             top: 0,
@@ -765,7 +765,8 @@ class _Step3Page extends StatelessWidget {
       backgroundColor: const Color(0xFFF2EEFB),
       eyebrow: '03 · Nồi lẩu tự sôi',
       title: 'Trò chuyện đủ\nấm, mới chốt kèo.',
-      body: 'Vibe check từng bước — từ chat đến bữa ăn thật. Điểm tin cậy minh bạch, không sến, không lo.',
+      body:
+          'Vibe check từng bước — từ chat đến bữa ăn thật. Điểm tin cậy minh bạch, không sến, không lo.',
       illustration: const _Step3Illustration(),
     );
   }
@@ -841,7 +842,9 @@ class _HotpotPainter extends CustomPainter {
     canvas.drawPath(lidPath, lidPaint);
 
     // Handle knob
-    final knobPaint = Paint()..color = AppColors.mint..style = PaintingStyle.fill;
+    final knobPaint = Paint()
+      ..color = AppColors.mint
+      ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w * 0.5, h * 0.2), 10, knobPaint);
 
     // Steam lines (wisteria)
@@ -855,9 +858,12 @@ class _HotpotPainter extends CustomPainter {
       final path = Path()
         ..moveTo(w * x, h * 0.15)
         ..cubicTo(
-          w * (x - 0.04), h * 0.08,
-          w * (x + 0.04), h * 0.04,
-          w * x, h * -0.02,
+          w * (x - 0.04),
+          h * 0.08,
+          w * (x + 0.04),
+          h * 0.04,
+          w * x,
+          h * -0.02,
         );
       canvas.drawPath(path, steamPaint);
     }
@@ -914,10 +920,7 @@ class _VibeBarSimple extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'VIBE CHECK',
-                style: AppTextStyles.eyebrow(),
-              ),
+              Text('VIBE CHECK', style: AppTextStyles.eyebrow()),
               RichText(
                 text: TextSpan(
                   children: [
@@ -931,7 +934,10 @@ class _VibeBarSimple extends StatelessWidget {
                     ),
                     TextSpan(
                       text: '/100',
-                      style: AppTextStyles.mono(size: 11, color: AppColors.ink50),
+                      style: AppTextStyles.mono(
+                        size: 11,
+                        color: AppColors.ink50,
+                      ),
                     ),
                   ],
                 ),
@@ -950,7 +956,11 @@ class _VibeBarSimple extends StatelessWidget {
                 child: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.ocean, AppColors.wisteria, AppColors.berry],
+                      colors: [
+                        AppColors.ocean,
+                        AppColors.wisteria,
+                        AppColors.berry,
+                      ],
                     ),
                   ),
                 ),
