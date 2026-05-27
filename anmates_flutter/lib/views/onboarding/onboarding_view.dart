@@ -639,16 +639,18 @@ class _MateProfile {
   final String name;
   final int age;
   final List<String> chips;
-  const _MateProfile(this.name, this.age, this.chips);
+  /// Realistic face photo via pravatar.cc (deterministic by img= param).
+  final String avatarUrl;
+  const _MateProfile(this.name, this.age, this.chips, this.avatarUrl);
 }
 
 const _kMates = [
-  _MateProfile('Vy', 24, ['🌶️ Cay 3', '💬 Tám']),
-  _MateProfile('Minh', 22, ['🍜 Mì cay', '🎮 Gaming']),
-  _MateProfile('Linh', 26, ['☕ Cafe', '📚 Sách']),
-  _MateProfile('Nam', 25, ['🍖 Nướng', '🏃 Chạy bộ']),
-  _MateProfile('Hà', 23, ['🌮 Ăn vặt', '🎵 Nhạc']),
-  _MateProfile('Tuấn', 27, ['🍣 Sushi', '📷 Ảnh']),
+  _MateProfile('Vy',   24, ['🌶️ Cay 3',   '💬 Tám'],      'https://i.pravatar.cc/400?img=47'),
+  _MateProfile('Minh', 22, ['🍜 Mì cay',  '🎮 Gaming'],    'https://i.pravatar.cc/400?img=12'),
+  _MateProfile('Linh', 26, ['☕ Cafe',     '📚 Sách'],      'https://i.pravatar.cc/400?img=48'),
+  _MateProfile('Nam',  25, ['🍖 Nướng',   '🏃 Chạy bộ'],   'https://i.pravatar.cc/400?img=15'),
+  _MateProfile('Hà',   23, ['🌮 Ăn vặt',  '🎵 Nhạc'],      'https://i.pravatar.cc/400?img=49'),
+  _MateProfile('Tuấn', 27, ['🍣 Sushi',   '📷 Ảnh'],       'https://i.pravatar.cc/400?img=16'),
 ];
 
 // ─── Screen 03 Illustration — Tinder-style swipeable card stack ──────────────
@@ -701,7 +703,7 @@ class _Step2IllustrationState extends State<_Step2Illustration>
         CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _swipeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
+        vsync: this, duration: const Duration(milliseconds: 650));
 
     Future.delayed(const Duration(milliseconds: 180), () {
       if (!mounted) return;
@@ -747,7 +749,7 @@ class _Step2IllustrationState extends State<_Step2Illustration>
           animation: Listenable.merge([_floatCtrl, _swipeCtrl, _pulseCtrl]),
           builder: (_, _) {
             final t  = _swipeCtrl.value; // 0 → 1 during swipe
-            final te = Curves.easeInCubic.transform(t); // eased for dx
+            final te = Curves.easeIn.transform(t); // gentle acceleration for natural feel
             final float = _isSwiping ? 0.0 : _floatAnim.value;
 
             // Profiles visible at each layer
@@ -894,28 +896,56 @@ class _MateProfileCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Photo area with diagonal stripes ─────────────────────────────
+          // ── Photo area — realistic avatar via pravatar.cc ─────────────
           Expanded(
             flex: 11,
             child: ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CustomPaint(painter: _DiagonalStripesPainter()),
-                  Center(
-                    child: Text(
-                      profile.name.toUpperCase(),
-                      style: AppTextStyles.mono(
-                        size: 11,
-                        weight: FontWeight.w600,
-                        color: AppColors.wisteria.withValues(alpha: 0.8),
-                        letterSpacing: 2.0,
+              child: Image.network(
+                profile.avatarUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                filterQuality: FilterQuality.medium,
+                // Shows diagonal-stripe placeholder while image loads
+                loadingBuilder: (_, child, progress) {
+                  if (progress == null) return child;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CustomPaint(painter: _DiagonalStripesPainter()),
+                      Center(
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: AppColors.wisteria.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                // Falls back to diagonal stripes on network error
+                errorBuilder: (_, _, _) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CustomPaint(painter: _DiagonalStripesPainter()),
+                    Center(
+                      child: Text(
+                        profile.name.toUpperCase(),
+                        style: AppTextStyles.mono(
+                          size: 11,
+                          weight: FontWeight.w600,
+                          color: AppColors.wisteria.withValues(alpha: 0.8),
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
