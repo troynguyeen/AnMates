@@ -5,7 +5,7 @@ run:
   modules-download-mode: readonly
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck       # unchecked errors (critical for DB + HTTP calls)
     - govet          # go vet checks
@@ -23,11 +23,10 @@ linters:
       exclude-functions:
         - (*github.com/jackc/pgx/v5/pgxpool.Pool).Close
         - (*github.com/jackc/pgx/v5.Tx).Rollback
-        - (net/http.Response.Body).Close  # defer resp.Body.Close() is legitimately fire-and-forget
+        - (net/http.Response.Body).Close
 
     revive:
       rules:
-        # Naming + correctness rules — high value, low noise.
         - name: var-naming
         - name: blank-imports
         - name: context-as-argument
@@ -40,8 +39,6 @@ linters:
         - name: unexported-return
         - name: unused-parameter
           severity: warning
-        # exported doc comments: disabled — too noisy for a startup codebase.
-        # Re-enable when the team adopts a doc-comment convention.
 
     gocritic:
       enabled-tags:
@@ -53,28 +50,23 @@ linters:
     staticcheck:
       checks:
         - "all"
-        - "-SA1019"   # allow deprecated APIs
-        - "-ST1000"   # package doc comment — too noisy, re-enable when adding godoc
-
-issues:
-  uniq-by-line: true
+        - "-SA1019"
+        - "-ST1000"
 
   exclusions:
     rules:
-      # Advisory unlock in defer is intentionally fire-and-forget.
       - path: db/migrate\.go
         linters: [errcheck]
         text: "pg_advisory_unlock"
 
-      # smoke/: do() helper reads+closes body internally; callers hold resp for
-      # status code only. bodyclose can't see through the helper boundary.
       - path: smoke/
         linters: [bodyclose, noctx, errcheck]
 
-      # interface{} in httputil is intentional (generic JSON envelope).
       - path: internal/httputil/
         linters: [revive]
         text: "interface\\{\\}"
 
+issues:
+  uniq-by-line: true
   max-issues-per-linter: 0
   max-same-issues: 0
