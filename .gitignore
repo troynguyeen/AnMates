@@ -102,6 +102,11 @@ AuthKey_*.p8
 GoogleService-Info.plist
 
 # ===========================
+# Load test artifacts (generated, large)
+# ===========================
+load-test/results/raw.json
+
+# ===========================
 # Build Artifacts
 # ===========================
 *.o
