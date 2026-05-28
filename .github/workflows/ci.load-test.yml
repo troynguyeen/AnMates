@@ -80,6 +80,7 @@ jobs:
           K6_WEB_DASHBOARD: "false"
         run: |
           mkdir -p load-test/results
+          chmod 777 load-test/results
           cd load-test
           docker compose up --build --exit-code-from k6
 
