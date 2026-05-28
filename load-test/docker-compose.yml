@@ -59,8 +59,11 @@ services:
     environment:
       BASE_URL: http://api:8080
       DEV_SECRET: loadtest-secret-2026
-      USER_POOL: "500"          # pre-created users shared across VUs
-      K6_WEB_DASHBOARD: "true"
+      USER_POOL: "${USER_POOL:-500}"
+      PEAK_VUS: "${PEAK_VUS:-500}"
+      CI_MODE: "${CI_MODE:-false}"
+      TARGET_HANDLERS: "${TARGET_HANDLERS:-all}"
+      K6_WEB_DASHBOARD: "${K6_WEB_DASHBOARD:-true}"
       K6_WEB_DASHBOARD_EXPORT: /results/report.html
     command: run --out json=/results/raw.json /scripts/k6-script.js
     deploy:
