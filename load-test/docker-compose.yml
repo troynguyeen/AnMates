@@ -49,6 +49,7 @@ services:
 
   k6:
     image: grafana/k6:latest
+    user: root
     depends_on:
       - api
     ports:
