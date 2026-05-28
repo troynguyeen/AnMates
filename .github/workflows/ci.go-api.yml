@@ -33,7 +33,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v2
+          version: v2.12.2
           working-directory: anmates-api
           args: --timeout=3m
 
