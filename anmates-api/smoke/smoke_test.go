@@ -85,7 +85,7 @@ func do(t *testing.T, method, path string, token string, body any) (int, envelop
 	if err != nil {
 		t.Fatalf("%s %s: %v", method, path, err)
 	}
-	defer resp.Body.Close() //nolint:errcheck // test helper; Close error is unrecoverable
+	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 	var env envelope
 	_ = json.Unmarshal(raw, &env)
