@@ -47,15 +47,15 @@ jobs:
               anmates-api/handlers/wishlist.go|anmates-api/services/wishlist.go)
                 TARGETS="$TARGETS wishlist" ;;
               anmates-api/handlers/matching.go|anmates-api/services/matching.go|\
-anmates-api/handlers/noi_lau.go|anmates-api/services/noi_lau.go|\
-anmates-api/handlers/chat.go|anmates-api/services/chat.go)
+              anmates-api/handlers/noi_lau.go|anmates-api/services/noi_lau.go|\
+              anmates-api/handlers/chat.go|anmates-api/services/chat.go)
                 TARGETS="$TARGETS matching" ;;
               anmates-api/main.go|\
-anmates-api/config/*|\
-anmates-api/middleware/*|\
-anmates-api/db/*|\
-anmates-api/models/*|\
-anmates-api/ws/*)
+              anmates-api/config/*|\
+              anmates-api/middleware/*|\
+              anmates-api/db/*|\
+              anmates-api/models/*|\
+              anmates-api/ws/*)
                 CROSS_CUTTING=true ;;
             esac
           done <<< "$CHANGED"
