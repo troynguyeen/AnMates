@@ -161,7 +161,11 @@ function runWishlist(h) {
     ];
     const cats = ['bun', 'pho', 'com', 'lau', 'bbq', 'cafe', 'trang_mieng', 'other'];
     const body = JSON.stringify({ food_name: pick(foods), food_category: pick(cats) });
-    const r = http.post(`${BASE_URL}/api/v1/wishlist`, body, { headers: h, timeout: '5s' });
+    const r = http.post(`${BASE_URL}/api/v1/wishlist`, body, {
+      headers: h,
+      timeout: '5s',
+      responseCallback: http.expectedStatuses(200, 201, 409),
+    });
     record(r, wishlistLatency, 'POST /wishlist', [200, 201, 409]);
   }
 }
