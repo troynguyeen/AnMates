@@ -279,7 +279,7 @@ class _OtpViewState extends State<OtpView> {
       focusNode: _keyboardFocusNode,
       onKeyEvent: _handleKeyEvent,
       child: Scaffold(
-        backgroundColor: AppColors.mint,
+        backgroundColor: Colors.white,
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,10 +318,14 @@ class _OtpViewState extends State<OtpView> {
                   children: [
                     const Eyebrow('BƯỚC 2 / 5'),
                     const SizedBox(height: 10),
-                    ScreenTitle(
-                      title: 'Nhập mã 6 số',
-                      subtitle:
-                          'Vừa gửi tới ${widget.phone}. Mã có hiệu lực 90 giây.',
+                    Text(
+                      'Nhập mã 6 số',
+                      style: AppTextStyles.display(size: 36, weight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Vừa gửi tới ${widget.phone}. Mã có hiệu lực 90 giây.',
+                      style: AppTextStyles.body(size: 15, color: AppColors.ink70, height: 1.4),
                     ),
                   ],
                 ),
@@ -560,7 +564,7 @@ class _KeyButtonState extends State<_KeyButton> {
                   widget.keyLabel,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.ink,
                   ),
                 ),
