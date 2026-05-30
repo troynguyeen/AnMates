@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, LogicalKeyboardKey;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,6 +42,7 @@ class _OtpViewState extends State<OtpView> {
   bool _loading = false;
   int _secondsLeft = _resendTimeout.inSeconds;
   Timer? _timer;
+  final FocusNode _keyboardFocusNode = FocusNode();
 
   /// Web-only: held so we can `clear()` it on dispose.
   RecaptchaVerifier? _resendVerifier;
@@ -48,19 +51,39 @@ class _OtpViewState extends State<OtpView> {
   void initState() {
     super.initState();
     _startTimer();
-    // Android instant-verify finished before this view mounted.
-    if (widget.autoIdToken != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _keyboardFocusNode.requestFocus();
+      // Android instant-verify finished before this view mounted.
+      if (widget.autoIdToken != null) {
         _verifyWithBackend(widget.autoIdToken!);
-      });
-    }
+      }
+    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _resendVerifier?.clear();
+    _keyboardFocusNode.dispose();
     super.dispose();
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is! KeyDownEvent || _loading) return KeyEventResult.ignored;
+
+    final char = event.character;
+    if (char != null && RegExp(r'^[0-9]$').hasMatch(char)) {
+      _onKeyTap(char);
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.backspace ||
+        event.logicalKey == LogicalKeyboardKey.delete) {
+      _onKeyTap('⌫');
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
   }
 
   void _startTimer() {
@@ -252,117 +275,132 @@ class _OtpViewState extends State<OtpView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.mint,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: GestureDetector(
-                onTap: _loading ? null : () => Navigator.pop(context),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.ink10,
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    size: 20,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Eyebrow('BƯỚC 2 / 5'),
-                  const SizedBox(height: 10),
-                  ScreenTitle(
-                    title: 'Nhập mã 6 số',
-                    subtitle:
-                        'Vừa gửi tới ${widget.phone}. Mã có hiệu lực 90 giây.',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  _otpLength,
-                  (i) => _OtpBox(
-                    digit: _digits[i],
-                    isActive: !_loading && i == _activeIndex,
-                    isLoading: _loading,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: GestureDetector(
-                onTap: _secondsLeft == 0 ? _resend : null,
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Chưa nhận được? ',
-                        style: GoogleFonts.beVietnamPro(
-                          fontSize: 13,
-                          color: AppColors.ink50,
+    return Focus(
+      focusNode: _keyboardFocusNode,
+      onKeyEvent: _handleKeyEvent,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: GestureDetector(
+                  onTap: _loading ? null : () => Navigator.pop(context),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: AppColors.ink10,
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
                         ),
-                      ),
-                      TextSpan(
-                        text: _secondsLeft > 0
-                            ? 'Gửi lại ($_timerText)'
-                            : 'Gửi lại',
-                        style: GoogleFonts.beVietnamPro(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _secondsLeft > 0
-                              ? AppColors.ink30
-                              : AppColors.berry,
-                          decoration: _secondsLeft == 0
-                              ? TextDecoration.underline
-                              : TextDecoration.none,
-                          decorationColor: AppColors.berry,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      size: 20,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Spacer(),
-            if (_loading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 32),
-                  child: CircularProgressIndicator(color: AppColors.berry),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Eyebrow('BƯỚC 2 / 5'),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Nhập mã 6 số',
+                      style: AppTextStyles.display(
+                        size: 36,
+                        weight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Vừa gửi tới ${widget.phone}. Mã có hiệu lực 90 giây.',
+                      style: AppTextStyles.body(
+                        size: 15,
+                        color: AppColors.ink70,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
-              )
-            else ...[
-              _NumericKeypad(onKeyTap: _onKeyTap),
-              const SizedBox(height: 12),
+              ),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    _otpLength,
+                    (i) => _OtpBox(
+                      digit: _digits[i],
+                      isActive: !_loading && i == _activeIndex,
+                      isLoading: _loading,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: GestureDetector(
+                  onTap: _secondsLeft == 0 ? _resend : null,
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Chưa nhận được? ',
+                          style: GoogleFonts.beVietnamPro(
+                            fontSize: 13,
+                            color: AppColors.ink50,
+                          ),
+                        ),
+                        TextSpan(
+                          text: _secondsLeft > 0
+                              ? 'Gửi lại ($_timerText)'
+                              : 'Gửi lại',
+                          style: GoogleFonts.beVietnamPro(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: _secondsLeft > 0
+                                ? AppColors.ink30
+                                : AppColors.berry,
+                            decoration: _secondsLeft == 0
+                                ? TextDecoration.underline
+                                : TextDecoration.none,
+                            decorationColor: AppColors.berry,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_loading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 32),
+                    child: CircularProgressIndicator(color: AppColors.berry),
+                  ),
+                )
+              else ...[
+                _NumericKeypad(onKeyTap: _onKeyTap),
+                const SizedBox(height: 12),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -533,7 +571,7 @@ class _KeyButtonState extends State<_KeyButton> {
                   widget.keyLabel,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.ink,
                   ),
                 ),
