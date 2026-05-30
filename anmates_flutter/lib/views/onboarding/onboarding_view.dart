@@ -2462,10 +2462,7 @@ class _HotpotPainter extends CustomPainter {
   final double lidOffsetY;
   final double steamPhase;
 
-  const _HotpotPainter({
-    this.lidOffsetY = 0,
-    this.steamPhase = 0,
-  });
+  const _HotpotPainter({this.lidOffsetY = 0, this.steamPhase = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2497,11 +2494,17 @@ class _HotpotPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(
       Rect.fromLTWH(w * -0.04, h * 0.38, w * 0.18, h * 0.22),
-      math.pi / 2, -math.pi, false, handlePaint,
+      math.pi / 2,
+      -math.pi,
+      false,
+      handlePaint,
     );
     canvas.drawArc(
       Rect.fromLTWH(w * 0.86, h * 0.38, w * 0.18, h * 0.22),
-      math.pi / 2, math.pi, false, handlePaint,
+      math.pi / 2,
+      math.pi,
+      false,
+      handlePaint,
     );
 
     // Steam (before lid so it appears from the gap)
@@ -2554,7 +2557,8 @@ class _HotpotPainter extends CustomPainter {
           : math.pow(1.0 - (raw - 0.18) / 0.82, 1.8).toDouble();
       final y = emitY - raw * h * 0.98;
       final radius = 7.0 + raw * 26.0;
-      final x = w * cfg.xFrac +
+      final x =
+          w * cfg.xFrac +
           math.sin(raw * math.pi * cfg.driftFreq) * w * cfg.driftAmp;
       final blurSigma = 3.0 + raw * 16.0;
 
@@ -2589,8 +2593,7 @@ class _HotpotPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_HotpotPainter old) =>
-      old.lidOffsetY != lidOffsetY ||
-      old.steamPhase != steamPhase;
+      old.lidOffsetY != lidOffsetY || old.steamPhase != steamPhase;
 }
 
 class _VibeBarSimple extends StatelessWidget {
