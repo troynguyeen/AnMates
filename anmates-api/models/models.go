@@ -7,15 +7,21 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Email        *string   `json:"email,omitempty"`
-	PasswordHash *string   `json:"-"`
-	Name         string    `json:"name"`
-	AvatarURL    *string   `json:"avatar_url,omitempty"`
-	Bio          *string   `json:"bio,omitempty"`
-	Phone        *string   `json:"phone,omitempty"`
-	FirebaseUID  *string   `json:"-"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID               uuid.UUID  `json:"id"`
+	Email            *string    `json:"email,omitempty"`
+	PasswordHash     *string    `json:"-"`
+	Name             string     `json:"name"`
+	AvatarURL        *string    `json:"avatar_url,omitempty"`
+	Bio              *string    `json:"bio,omitempty"`
+	Phone            *string    `json:"phone,omitempty"`
+	FirebaseUID      *string    `json:"-"`
+	Nickname         *string    `json:"nickname,omitempty"`
+	BirthDate        *time.Time `json:"birth_date,omitempty"`
+	PersonalityScore *int16     `json:"personality_score,omitempty"`
+	FoodTags         []string   `json:"food_tags"`
+	VibeTags         []string   `json:"vibe_tags"`
+	OnboardingDone   bool       `json:"onboarding_done"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 type Wishlist struct {

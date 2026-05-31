@@ -6,8 +6,10 @@ import '../../theme/app_theme.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../widgets/anm_logo.dart';
 import '../../widgets/anm_widgets.dart';
+import '../../services/auth_service.dart';
 import '../auth/phone_input_view.dart';
 import '../main_tab_view.dart';
+import 'user_profile_view.dart';
 
 // Shared splash-style background gradient applied to every onboarding page so
 // the whole pre-auth flow reads as one surface. Text/buttons are light on top.
@@ -68,12 +70,31 @@ class _OnboardingViewState extends State<OnboardingView> {
       navigator.pushReplacement(
         MaterialPageRoute(
           builder: (_) => PhoneInputView(
-            onAuthenticated: () => navigator.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const MainTabView()),
-              (_) => false,
-            ),
+            onAuthenticated: () => _routeAfterAuth(navigator),
           ),
         ),
+      );
+    }
+  }
+
+  // After OTP auth: returning users (onboarding_done=true) go straight to the
+  // main app; new users are routed through Screen 08 → 09 first.
+  Future<void> _routeAfterAuth(NavigatorState navigator) async {
+    final done = await AuthService().isOnboardingDone();
+    void toMain() => navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MainTabView()),
+      (_) => false,
+    );
+    if (done) {
+      toMain();
+    } else {
+      // pushAndRemoveUntil xóa sạch stack (phone input + OTP) để user
+      // không thể back về màn hình nhập SĐT sau khi đã xác thực xong.
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => UserProfileView(onComplete: toMain),
+        ),
+        (_) => false,
       );
     }
   }
