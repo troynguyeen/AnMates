@@ -1,10 +1,11 @@
 # Current Task
 
-**Status:** code-complete + build-verified, QA-pending (Post-OTP Onboarding Flow — Screens 08 + 09). All B1-B8 + F1-F6 implemented directly per user option-2 authorization. **VERIFIED GREEN:** `GO111MODULE=on GOPROXY=off go build ./...` → rc=0; `go vet ./...` → rc=0 (no output); `flutter analyze lib/` → 0 errors/0 warnings on all new+modified files (only 5 pre-existing info lints in untouched places_service.dart). BLOCKER-003 resolved — root cause was shell `GO111MODULE=off` forcing GOPATH mode (not a code error); set `GO111MODULE=on`. Remaining: functional QA pass (08→09→MainTabView; returning user skips; PATCH 200s).
-**Owner:** team-leader
+**Status:** done — UI confirmed by user, nav bug fixed, R-003 written.
+**Owner:** main-assistant
 **Started at:** 2026-05-30
-**Last updated:** 2026-05-30
-**Goal:** Implement post-OTP onboarding: Screen 08 (Thông Tin Cá Nhân, 3/5) + Screen 09 (Gú Ẩm Thực, 4/5). New users route through both before MainTabView; returning users (onboarding_done=true) skip to MainTabView. Backend: 003 migration + 2 PATCH endpoints (/profile/onboarding, /profile/preferences). Flutter: 2 new screens + profile_service + astrology utils + _navigateAway routing. See plan.md.
+**Last updated:** 2026-05-31
+**Goal:** Implement post-OTP onboarding: Screen 08 (Thông Tin Cá Nhân, 3/5) + Screen 09 (Gú Ẩm Thực, 4/5). ✅ Backend B1-B8 done. ✅ Flutter F1-F6 done. ✅ UI polish Screen 08 confirmed. ✅ Nav bug fixed (pushAndRemoveUntil). See R-003 + sessions/2026-05-31-screen08-ui-polish.md.
+**Jira:** TECH-7 (Screen 08) in epic TECH-6 (Auth & Profile UI/UX)
 
 ---
 
